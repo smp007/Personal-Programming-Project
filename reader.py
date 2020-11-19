@@ -84,18 +84,21 @@ for file in file_list:
     energy_list = []
     data_list = []
     #print(file)
-    energy_value,number_of_atoms,atom_data = xsf_reader(file)
+    if __name__ == "__main__":
+        energy_value,number_of_atoms,atom_data = xsf_reader(file)
     #print(energy_value)
-    energy_value_list.append(energy_value)
-    number_of_atoms_list.append(number_of_atoms)
-    atom_data_list.append(atom_data)
+        energy_value_list.append(energy_value)
+        number_of_atoms_list.append(number_of_atoms)
+        atom_data_list.append(atom_data)
 
-#print(energy_value_list)  
-#print(number_of_atoms_list)  
-#print(atom_data_list)
+if __name__ == "__main__":
+    print(energy_value_list)  
+    print(number_of_atoms_list)  
+    print((atom_data_list))
 
 #print('{:<15}={:>17}'.format('Energy',energy))  #string formatting
 #print('{:<15}={:>17}'.format('No: of atoms',n),"\n\n")
 #plt.plot(energy_value_list,marker='o')
 #plt.show()
+
 
