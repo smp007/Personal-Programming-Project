@@ -37,7 +37,7 @@ for datapoint,color in zip(datapoints,colors):
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
-#plt.show()
+plt.show()
 
 # fig = plt.figure()
 # ax = Axes3D(fig)
