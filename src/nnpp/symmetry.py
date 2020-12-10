@@ -195,10 +195,10 @@ def symmetry_function(datapoints_list):
 
 tic = time.time()
 
-path = './data_set_TiO2_small'
+path = './data_set_TiO2'
 file_list = sorted(os.listdir(path))
 for i,file in enumerate(file_list):
-    if i>=81 and i<100:
+    if i==1248:
         print('structure no =',i-1)
     
         datapoints_list = []

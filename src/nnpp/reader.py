@@ -13,7 +13,7 @@ returns 1)structural energy
 # imports
 # ------------------------------------------------------------------------------
 import numpy as np
-import pandas as pd
+#import pandas as pd
 import os 
 import matplotlib.pyplot as plt
 
@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 #
 
 no_of_atoms = 0
-path = './data_set_TiO2_small'
+path = './data_set_TiO2'
 file_list = sorted(os.listdir(path))
 # print(path)
 #print(path+'/'+file_list[0])
@@ -31,6 +31,7 @@ def xsf_reader(file):
     """Takes in an XCrysden Structure File and returns the list of atomic 
     cordinates along with atom types"""
     #print(file)
+    data_list = []
     with open(path+'/'+'%s'%(file)) as f:
         for i,line in enumerate(f):
 
@@ -47,31 +48,32 @@ def xsf_reader(file):
     energy = float(energy_list[0][1][:-3])  #extracts requires number from line 1 in list form
  
     data = []
+    #print(data_list[1])
     for i in range(len(data_list)):#splitting the line in data
-        data.append(data_list[i][0].strip().split('    '))
+        data.append(data_list[i][0].strip(' ').split('    '))
         #print(len(data[i][0]))
-    data = np.array(data)
+    data = np.array(data,dtype=list)
 
+    #print(data)
+    #print(data[:,0])
     #first column print(data[:,0])
     #remaining columns print(data[:,1:])
     AtomType = np.array([data[:,0]],dtype=str).T #transposes the atom type strings
-    XYZ = np.array(data[:,1:])
+    #print(AtomType)
+    XYZ = np.array(data[:,1:4])   #data[:,1:]
+    #print(XYZ)
     new_data = np.hstack((AtomType,XYZ))#stacking
+    #print(new_data)
+    # print(new_data[:,0])
 
+    atom_coordinates = []
+    atom_coordinates_list = []
 
-    colNames = ['AtomType','X','Y','Z','Fx','Fy','Fz']
-    df = pd.DataFrame(new_data,columns=colNames)
-    #print(df[['AtomType','X','Y','Z']])
-
-    xs,ys,zs,elements = [],[],[],[]
-    for i in range(df.shape[0]):
-        elements.append(df.iloc[i,:4]['AtomType'])
-        xs.append(float(df.iloc[i,:4]['X']))
-        ys.append(float(df.iloc[i,:4]['Y']))
-        zs.append(float(df.iloc[i,:4]['Z']))
-
-    atom_coordinates = ([element,x,y,z] for element,x,y,z in zip(elements,xs,ys,zs))
+    atom_coordinates = ([element,float(x),float(y),float(z)] for element,x,y,z in zip(new_data[:,0],new_data[:,1],new_data[:,2],new_data[:,3]))
+    
     atom_coordinates_list = [*atom_coordinates]
+    #print(atom_coordinates_list)
+    #print(atom_coordinates_list)
     #print([*atom_coordinates])
     
     return energy,n,atom_coordinates_list
@@ -98,7 +100,5 @@ if __name__ == "__main__":
 
 #print('{:<15}={:>17}'.format('Energy',energy))  #string formatting
 #print('{:<15}={:>17}'.format('No: of atoms',n),"\n\n")
-#plt.plot(energy_value_list,marker='o')
-#plt.show()
 
 

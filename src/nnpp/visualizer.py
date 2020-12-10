@@ -9,11 +9,11 @@ import reader
 
 path = './data_set_TiO2_small'
 file_list = sorted(os.listdir(path))
-file = file_list[0]
+file = file_list[2]
 #print(file)
 datapoints_list = []
 _,_,datapoints_list=reader.xsf_reader(file)
-                                                    #print(reader.xsf_reader(file))
+ #print(reader.xsf_reader(file))
 # x_value = [x for (_,x,_,_) in datapoints_list]
 # y_value = [y for (_,_,y,_) in datapoints_list]
 # z_value = [z for (_,_,_,z) in datapoints_list]
@@ -31,12 +31,16 @@ fig = plt.figure(figsize = (10,7))
 ax = plt.axes(projection = '3d')
 datapoints = [(x,y,z) for (_,x,y,z) in datapoints_list]
 colors = ['red' if element == 'Ti' else 'blue' for(element,_,_,_) in datapoints_list ]
-for datapoint,color in zip(datapoints,colors):
+labels = ['Ti' if element == 'Ti'else 'O' for(element,_,_,_) in datapoints_list]
+for datapoint,color,label_ in zip(datapoints,colors,labels):
      x,y,z = datapoint
      ax.scatter3D(x,y,z,c=color,s=500)
+
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
+ax.set_title('Atomic Visualization')
+ax.legend()
 plt.show()
 
 # fig = plt.figure()
