@@ -108,29 +108,35 @@ def d_tanh(s):
 def d_linear(s):
     return 1
 
-#E_nn = np.array([1,2,3])
-#E_ref = np.array([1,1,1])
-#m = len(E_ref)
+E_nn = np.array([1,2,3])
+E_ref = np.array([1,1,1])
 
-def RMSE(E_nn,E_ref,m):     
-    return np.sqrt(np.sum(np.square(E_nn-E_ref))/m)
 
-def MAE(E_nn,E_ref,m):
-    return np.sum(np.abs(E_nn-E_ref))/m
+def RMSE(predictions,references):
+    m = len(references)     
+    return np.sqrt(np.sum(np.square(predictions-references))/m)
 
-def MSE(E_nn,E_ref,m):
-    return np.square(np.subtract(E_nn,E_ref)).mean()
+def MAE(predictions,references):
+    m = len(references)
+    return np.sum(np.abs(predictions-references))/m
 
+def MSE(predictions,references):
+    m = len(references)
+    return 0.5*np.sum(np.square((predictions-references)))/m
+
+def d_MSE(predictions,references):
+    return(predictions-references)
 
     
 
-#print('rmse',RMSE(E_nn,E_ref,m))
-#print('mae',MAE(E_nn,E_ref,m))
-#print('mse',MSE(E_nn,E_ref,m))
+print('rmse',RMSE(E_nn,E_ref))
+print('mae',MAE(E_nn,E_ref))
+print('mse',MSE(E_nn,E_ref))
 
 
 
 #-------------------------------------------------------------------------------
+
 class NeuralNetwork:
     def __init__(self,nodelist,activations):
         '''Initialisation of neural network parameters'''
@@ -161,32 +167,124 @@ class NeuralNetwork:
         output      = self.output_activation(np.dot(self.layer2,self.weights3)+self.bias3)
         return output
 
+    
     def backward_prop(self,x,e_nn,e_ref):
         #output layer
-        self.error_output_layer = e_nn-e_ref
-        print('error_output_layer',self.error_output_layer)
+        self.error_output_layer = d_MSE(e_nn,e_ref)
+        ##print('error_output_layer',self.error_output_layer)
         self.delta_output_layer = self.error_output_layer * d_linear(e_nn)
-        print('delta_output_layer',self.delta_output_layer)
+        ##print('delta_output_layer',self.delta_output_layer)
         #layer 2
         self.error_layer2 = self.delta_output_layer.dot(self.weights3.T)
-        print('error_layer2',self.error_layer2)
+        ##print('error_layer2',self.error_layer2)
         self.delta_layer2 = self.error_layer2 * d_sigmoid(self.layer2)
-        print('delta_layer2',self.delta_layer2)
+        ##print('delta_layer2',self.delta_layer2)
         #layer 1
         self.error_layer1 = self.delta_layer2.dot(self.weights2.T)
         self.delta_layer1 = self.error_layer1 * d_sigmoid(self.layer1)
 
-        #weight update term
+        #weight update term(derivatives)
         dJdw1 =  x.T.dot(self.delta_layer1)
         dJdw2 =  (self.layer1.T).dot(self.delta_layer2)
         dJdw3 =  self.layer2.T.dot(self.delta_output_layer)
 
         return dJdw1,dJdw2,dJdw3
 
-    def NN_optimize(self,dw1,dw2,dw3):
-        self.weights1 -= 0.01*dw1
-        self.weights2 -= 0.01*dw2
-        self.weights3 -= 0.01*dw3
+    def NN_optimize(self,dw1,dw2,dw3,learning_rate):
+        self.weights1 -= learning_rate * dw1
+        self.weights2 -= learning_rate * dw2
+        self.weights3 -= learning_rate * dw3
+
+#gradient checking
+    def collect_parameters(self):
+        #to convert weight matrix into a flattened n x 1 array
+        parameters = np.concatenate((self.weights1.reshape(-1),self.weights2.reshape(-1),self.weights3.reshape(-1)))
+        return parameters
+    
+    def set_parameters(self,parameters):
+        #w1 
+        w1_first = 0
+        w1_last = self.input_nodes * self.hidden_layer1_nodes
+        self.weights1 = parameters[w1_first:w1_last].reshape(self.input_nodes,self.hidden_layer1_nodes)
+        #w2 
+        w2_first = w1_last
+        w2_last = w2_first + (self.hidden_layer1_nodes*self.hidden_layer2_nodes)
+        self.weights2 = parameters[w2_first:w2_last].reshape(self.hidden_layer1_nodes,self.hidden_layer2_nodes)
+        #w3 
+        w3_first = w2_last
+        w3_last = w3_first +(self.hidden_layer2_nodes*self.output_nodes)
+        self.weights3 = parameters[w3_first:w3_last].reshape(self.hidden_layer2_nodes,self.output_nodes)
+        return 0
+
+    def analytical_gradients(self,x,e_nn,e_ref):
+        '''returns the gradients found by the backprop algorithm'''
+        djdw1,djdw2,djdw3 = self.backward_prop(x,e_nn,e_ref)
+        return np.concatenate((djdw1.reshape(-1),djdw2.reshape(-1),djdw3.reshape(-1))) #flattens the gradient values into a 1D array
+
+
+epsilon = 1e-5    
+def numerical_gradients(nn,x,e_nn,e_ref):
+    parameter_values          = nn.collect_parameters()      #collects the weights of the NN
+    numerical_gradient_values = np.zeros(parameter_values.shape) #to store the numerical gradients of corresponding perturbing weight
+    small_change_vector       = np.zeros(parameter_values.shape) #vector for disturbing the weights(one at a time)   
+
+    for i in range(len(parameter_values)):
+        #we need to change the i th element of small_change_vector to epsilon
+        small_change_vector[i] = epsilon
+        #now we add this change to the parameter values and pass it to set_parameters function and calculate loss
+        new_parameter_values = parameter_values+small_change_vector
+        nn.set_parameters(new_parameter_values)
+        e_nn = nn.forward_prop(x)
+        loss_plus = MSE(e_nn,e_ref)
+        #now we subtract the change and find loss
+        new_parameter_values = parameter_values-small_change_vector
+        nn.set_parameters(new_parameter_values)
+        e_nn = nn.forward_prop(x)
+        loss_minus = MSE(e_nn,e_ref)
+        #derivative using central difference method
+        numerical_gradient_values[i] = (loss_plus-loss_minus)/(2*epsilon)
+        small_change_vector[i] = 0
+    
+    nn.set_parameters(parameter_values)
+
+    return numerical_gradient_values
+
+
+
+#------------------------------------------------------------------------------- dec 19 night
+def nn_switcher(x):
+    val = len(x)
+    no_of_ti_atoms = {
+      # No of atoms : No of Ti atoms
+                 6  :   2,                
+                22  :   8,
+                23  :   8,
+                24  :   8,
+                46  :   16,
+                47  :   16,
+                94  :   32,
+                95  :   32
+    }
+    return no_of_ti_atoms[val]
+
+def structure_forward_prop(a,nn1,nn2,index):
+    output=[]
+    for i in range(len(a)):
+        if i<= (index-1):        
+            output.append(nn1.forward_prop(a[i]))
+        else:
+            output.append(nn2.forward_prop(a[i]))
+    return (output)
+
+def train(nn1,nn2,index,a,e_ref,learning_rate):
+    output = sum(structure_forward_prop(a,nn1,nn2,index))  
+    print('output',output,'e_ref',e_ref) 
+    w1_t,w2_t,w3_t = nn1.backward_prop(a[0],output,e_ref)
+    #print('w1',w1_t,'w2',w2_t,'w3',w3_t)
+    nn1.NN_optimize(w1_t,w2_t,w3_t,learning_rate)
+    w1_o,w2_o,w3_o = nn2.backward_prop(a[index],output,e_ref)
+    #print('w1',w1_o,'w2',w2_o,'w3',w3_o)
+    nn2.NN_optimize(w1_o,w2_o,w3_o,learning_rate)
 
 
 ##node_list1 = [4,3,3,1]          #contains the layer sizes
@@ -207,19 +305,20 @@ class NeuralNetwork:
 # no_of_atoms = len(test_xy[0][0])
 # print(no_of_atoms)
 
-#70-10-10-1 nn -----------------------------------------------------------------
+'''#70-10-10-1 nn -----------------------------------------------------------------
 file_name = 'structure1249.txt'
 x = np.loadtxt(os.path.join('./symmetry_functions','%s') %file_name)
-a = (x.reshape(6,1,70))
-print(a[0])
-E_ref = [[-4987.12739129]]
-print(len(E_ref))
+n = len(x)
+A = x.reshape(n,1,70)
+print(A)
+E_ref = [[0]]  #-19960.66173260
+#print(len(E_ref))
 #print(len(x))
 #print(x[0])
 
 #o1 = nn_Ti.forward_prop(x1)
 #o2 = nn_O.forward_prop(x2)
-print(a[0].shape)
+print(A[0].shape)
 #print(o1)
 node_list = [70,10,10,1]          #contains the layer sizes
 activations = [sigmoid,sigmoid,linear]    
@@ -247,42 +346,43 @@ def nn_switcher(x):
     }
     return no_of_ti_atoms[val]
 
-index = nn_switcher(a)
+index = nn_switcher(A)
 
 #print('no of ti :',index)
 
 
-def structure_forward_prop(a):
+def structure_forward_prop(a,nn1,nn2):
     output=[]
     for i in range(len(a)):
         if i<= (index-1):        
-            output.append(nn_Ti.forward_prop(a[i]))
+            output.append(nn1.forward_prop(a[i]))
         else:
-            output.append(nn_O.forward_prop(a[i]))
+            output.append(nn2.forward_prop(a[i]))
     return (output)
 
-print(structure_forward_prop(a))
+print(structure_forward_prop(A,nn_Ti,nn_O))
         
-def train():
-    output = sum(structure_forward_prop(a))  
-    print('output',output,'e_ref',E_ref) 
-    w1_t,w2_t,w3_t = nn_Ti.backward_prop(a[0],output,E_ref)
+def train(nn1,nn2,index,a,e_ref):
+    output = sum(structure_forward_prop(a,nn1,nn2))  
+    print('output',output,'e_ref',e_ref) 
+    w1_t,w2_t,w3_t = nn1.backward_prop(a[0],output,e_ref)
     #print('w1',w1_t,'w2',w2_t,'w3',w3_t)
-    nn_Ti.NN_optimize(w1_t,w2_t,w3_t)
-    w1_o,w2_o,w3_o = nn_O.backward_prop(a[5],output,E_ref)
+    nn1.NN_optimize(w1_t,w2_t,w3_t,learning_rate)
+    w1_o,w2_o,w3_o = nn2.backward_prop(a[0],output,e_ref)
     #print('w1',w1_o,'w2',w2_o,'w3',w3_o)
-    nn_O.NN_optimize(w1_o,w2_o,w3_o)
+    nn2.NN_optimize(w1_o,w2_o,w3_o,learning_rate)
 
-for i in range(120):
-    train()
+for i in range(130):
+    train(nn_Ti,nn_O,index,A,E_ref)
 
-print(structure_forward_prop(a))
-print('output',sum(structure_forward_prop(a)),'e_ref',E_ref)
-print('cost',sum(structure_forward_prop(a))-E_ref)
+print(structure_forward_prop(A,nn_Ti,nn_O))
+print('output',sum(structure_forward_prop(A,nn_Ti,nn_O)),'e_ref',E_ref)
+print('cost',sum(structure_forward_prop(A,nn_Ti,nn_O))-E_ref)
 # for i in range(2):
 #     train(a,E_ref)
 # # print((output))
 # # print(sum(output))
+#70-10-10-1 nn -----------------------------------------------------------------'''
 
 '''##Test for a small network------------------------------------------------------
 node_list = [2,4,3,1]
@@ -297,7 +397,7 @@ def train(a,b):
     out = nn_test.forward_prop(a)
     w1,w2,w3 = nn_test.backward_prop(a,out,b)
     print(w1,'\n',w2,'\n',w3)
-    nn_test.NN_optimize(w1,w2,w3)
+    nn_test.NN_optimize(w1,w2,w3,learning_rate)
 
 print('before',nn_test.forward_prop(x))
 for i in range(5):
@@ -310,3 +410,41 @@ print('cost',nn_test.forward_prop(x)-y)
 
 
 print('Time taken =',str((toc-tic)) + 'sec')
+
+'''#numerical gradient check starts------------------------------------------------
+
+node_list = [2,3,5,1]
+activations = [sigmoid,sigmoid,linear]  
+x = np.array([2,20]).reshape(1,2)
+y = np.array([1000]).reshape(1,1)
+print(x.shape)
+print(y.shape)
+nn_test = NeuralNetwork(node_list,activations)
+
+print('Weights 1 \n',nn_test.weights1,'\n','Weights 2 \n',nn_test.weights2,'\n','Weights 3 \n',nn_test.weights3)
+
+def train(a,b):
+    out = nn_test.forward_prop(a)
+    w1,w2,w3 = nn_test.backward_prop(a,out,b)
+    print(w1,'\n',w2,'\n',w3)
+    #print(nn_test.backward_prop(a,out,b))
+    ################nn_test.NN_optimize(w1,w2,w3,learning_rate)
+    #print(nn_test.backward_prop(a,out,b))
+
+print('before',nn_test.forward_prop(x))
+for i in range(1):
+    train(x,y)
+
+print('after',nn_test.forward_prop(x))
+print('error',nn_test.forward_prop(x)-y)
+
+
+print('Weights 1 \n',nn_test.weights1,'\n','Weights 2 \n',nn_test.weights2,'\n','Weights 3 \n',nn_test.weights3)
+print(nn_test.set_parameters(nn_test.collect_parameters()))
+e_nn = nn_test.forward_prop(x)
+print(nn_test.analytical_gradients(x,e_nn,y))
+print(numerical_gradients(nn_test,x,e_nn,y))
+print(nn_test.analytical_gradients(x,e_nn,y)-numerical_gradients(nn_test,x,e_nn,y))
+#print(np.linalg.norm(nn_test.analytical_gradients(x,e_nn,y)-numerical_gradients(nn_test,x,e_nn,y)))
+
+#numerical gradient check ends--------------------------------------------------'''
