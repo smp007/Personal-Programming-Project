@@ -4,7 +4,7 @@ import time
 import matplotlib.pyplot as plt 
 import random
 
-path = './data_set_TiO2_500'
+path = './data_set_TiO2'
 file_list = sorted(os.listdir(path))
 print((file_list))
 
@@ -45,18 +45,20 @@ dataset and append it to the test set simultaneously'''
 np.random.seed(5)
 #print(test_train_split(file_list,energy_list,80))
 
-a,b,c,d = test_train_split(file_list,energy_list,90)
+a,b,c,d = test_train_split(file_list,energy_list,99.9)
 #print(len(c))
 
 
-test_xy = ([(np.loadtxt(os.path.join('./sym_fun_500','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) #np.loadtxt(os.path.join('./symmetry_functions','%s') %(x[:-3]+'txt'))
-train_xy = ([(np.loadtxt(os.path.join('./sym_fun_500','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
+test_xy = ([(np.loadtxt(os.path.join('./sym_fun_all_2','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) #np.loadtxt(os.path.join('./symmetry_functions','%s') %(x[:-3]+'txt'))
+train_xy = ([(np.loadtxt(os.path.join('./sym_fun_all_2','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
 
 #train set arrays
 inputs,outputs = zip(*train_xy)
 inputs_ = np.asarray([x.reshape(len(x),1,70) for x in inputs]) #to np arrays
 outputs_ = np.asarray([*outputs])
-
+r = random.random()
+random.shuffle(inputs_,lambda:r)
+random.shuffle(outputs_,lambda:r)
 
 
 #test set arrays
@@ -68,6 +70,38 @@ r = random.random()
 random.shuffle(inputs2_,lambda:r)
 random.shuffle(outputs2_,lambda:r)
 print(outputs2_)
+
+
+
+
+#min max normalization----------------------------------------------------------
+g_max_array = []
+for i in range(len(inputs_)):
+    g_max_array.append(np.max(inputs_[i],axis=0))
+g_max_array_np = np.array(g_max_array)
+print(g_max_array_np.shape)
+g_max = np.max(g_max_array_np,axis=0)
+print(g_max.shape)
+print(g_max)
+
+g_min_array = []
+for i in range(len(inputs_)):
+    g_min_array.append(np.min(inputs_[i],axis=0))
+g_min_array_np = np.array(g_min_array)
+print(g_min_array_np.shape)
+g_min = np.min(g_min_array_np,axis=0)
+print(g_min.shape)
+print(g_min)
+
+
+for i in range(len(inputs_)):
+    for j in range(len(inputs_[i])):
+        inputs_[i][j] = (2*(inputs_[i][j]-g_min)/(g_max-g_min))-1
+
+for i in range(len(inputs2_)):
+    for j in range(len(inputs2_[i])):
+        inputs2_[i][j] = (2*(inputs2_[i][j]-g_min)/(g_max-g_min))-1
+#-------------------------------------------------------------------------------
 #exit(0)
 #print(outputs)
 #print(inputs2_[0])
@@ -99,7 +133,7 @@ def linear(z):
 #-------------------------------------------------------------------------------
 def d_sigmoid(s):
     #derivative of sigmoid
-    return s * (1 - s)
+    return sigmoid(s) * (1-sigmoid(s))
 
 def d_ReLU(s):
     #derivative of ReLU
@@ -107,7 +141,7 @@ def d_ReLU(s):
 
 def d_tanh(s):
     #derivative of tanh
-    return 1-(s**2)
+    return 1-((np.tanh(s))**2)
 
 def d_linear(s):
     return 1
@@ -366,6 +400,7 @@ def structure_backward_prop(a,nn1,nn2,output,e_ref,learning_rate):#try only for 
             b1_o += nn2.backward_prop(a[i],output,e_ref)[3]
             b2_o += nn2.backward_prop(a[i],output,e_ref)[4]            
             b3_o += nn2.backward_prop(a[i],output,e_ref)[5]  
+    #val = len(a)-index
     w_b_parameters = [w1_t,w2_t,w3_t,b1_t,b2_t,b3_t,w1_o,w2_o,w3_o,b1_o,b2_o,b3_o]  
     return w_b_parameters
     
@@ -399,19 +434,19 @@ def train2(nn1,nn2,a,e_ref,learning_rate):#try only
 #exit(0)
 
 
-node_list_1 = [70,7,7,1]          #contains the layer sizes
+node_list_1 = [70,11,11,1]          #contains the layer sizes
 activations_1 = ['sigmoid','sigmoid','linear']    
 nn_Ti_1 = NeuralNetwork(node_list_1,activations_1)
 nn_O_1  = NeuralNetwork(node_list_1,activations_1)
 
-node_list_2 = [70,19,19,1]          #contains the layer sizes
-activations_2 = ['tanh','tanh','linear']    
+node_list_2 = [70,11,11,1]          #contains the layer sizes
+activations_2 = ['sigmoid','sigmoid','linear']    
 nn_Ti_2 = NeuralNetwork(node_list_2,activations_2)
 nn_O_2 = NeuralNetwork(node_list_2,activations_2)
 #print('Ti --',nn_Ti,'\n','O --',nn_O)
 
-node_list_2 = [70,9,9,1]          #contains the layer sizes
-activations_2 = ['sigmoid','sigmoid','linear']    
+#node_list_2 = [70,9,9,1]          #contains the layer sizes
+#activations_2 = ['tanh','tanh','linear']    
 nn_Ti_3 = NeuralNetwork(node_list_2,activations_2)
 nn_O_3= NeuralNetwork(node_list_2,activations_2)
 
@@ -523,12 +558,12 @@ def minibatch_gradient_descent(nn1,nn2,g_list,e_ref_list,learning_rate,batchSize
     return cost_extract,learning_rate
 
 
-cost_variation_mbgd,lr_mbgd = minibatch_gradient_descent(nn_Ti_1,nn_O_1,inputs2_,outputs2_,learning_rate=0.00009913212,batchSize=1000,epochs=100)
+cost_variation_mbgd,lr_mbgd = minibatch_gradient_descent(nn_Ti_1,nn_O_1,inputs2_,outputs2_,learning_rate=0.00006,batchSize=30,epochs=160)
 
-cost_variation_mom,lr_mom = SGD_momentum(nn_Ti_2,nn_O_2,inputs2_,outputs2_,learning_rate=0.00001,epochs=100,beta=0.9)
+cost_variation_mom,lr_mom = SGD_momentum(nn_Ti_2,nn_O_2,inputs2_,outputs2_,learning_rate=0.00006,epochs=160,beta=0.99)
 
 
-cost_variation_sgd,lr_sgd = stochastic_gradient_descent(nn_Ti_3,nn_O_3,inputs2_,outputs2_,learning_rate=0.00009913212,epochs=100)
+cost_variation_sgd,lr_sgd = stochastic_gradient_descent(nn_Ti_3,nn_O_3,inputs2_,outputs2_,learning_rate=0.00005,epochs=160)
 
 def predict_energy(g_list,e_ref_list):
     #r = random.random()
@@ -539,9 +574,10 @@ def predict_energy(g_list,e_ref_list):
     e_predicted_list = []
     for j in range(m):
         e_predicted_list.append(sum(structure_forward_prop(g_list[j],nn_Ti_2,nn_O_2)))
-        print(e_predicted_list)
+        #print(e_predicted_list)
     print('#######################################################','\n')
-    print('predicted',np.concatenate(e_predicted_list).reshape(-1).tolist(),'\n\n','reference',e_ref_list)
+    #print('predicted',np.concatenate(e_predicted_list).reshape(-1).tolist(),'\n\n','reference',e_ref_list)
+    print([(a,b) for a,b in zip(np.concatenate(e_predicted_list).reshape(-1).tolist(),e_ref_list)])
     print('#######################################################','\n')
     cost = MSE(np.asarray(e_predicted_list),np.asarray(e_ref_list))
     print(cost)
@@ -553,11 +589,11 @@ x,y = predict_energy(inputs2_,outputs2_)
 x_ = (np.concatenate(x).reshape(-1))
 toc = time.time()
 #exit(0)
-x_axis = np.linspace(0,100,100)
+x_axis = np.linspace(0,160,160)
 
 if __name__ == '__main__':
     fig = plt.figure(figsize = (6,4),dpi =150)
-    plt.plot(x_axis,cost_variation_sgd,'o-b',label='SGD')
+    plt.plot(x_axis,cost_variation_sgd,'.-b',label='SGD')
     plt.plot(x_axis,cost_variation_mbgd,'.-r',label='minibatch GD')
     plt.plot(x_axis,cost_variation_mom,'.:y',label='SGD momentum')
     plt.xlabel('epochs')
