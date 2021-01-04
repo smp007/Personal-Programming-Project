@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import random
 
 path = './data_set_TiO2'
-file_list = sorted(os.listdir(path))
-print((file_list))
+file_list = (os.listdir(path))
+#print((file_list))
 
 number_of_atomss = []
 energy_list = []
@@ -33,82 +33,61 @@ dataset and append it to the test set simultaneously'''
     n_train_set = split/100 * n_total_set
     train_set = []   
     test_set = filelist[:]
-    #print(filelist)
     train_energy = [] 
     test_energy = energylist
     while len(train_set) < n_train_set :
         indox = np.random.randint(0,len(test_set))     #randrange(len(train_set))
-        print(indox)
         train_set.append(test_set.pop(indox))
         train_energy.append(test_energy.pop(indox))
     return train_set,test_set,(train_energy),(test_energy)
-np.random.seed(5)
-#print(test_train_split(file_list,energy_list,80))
-
-a,b,c,d = test_train_split(file_list,energy_list,99.9)
-#print(len(c))
 
 
-test_xy = ([(np.loadtxt(os.path.join('./sym_fun_all_2','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) #np.loadtxt(os.path.join('./symmetry_functions','%s') %(x[:-3]+'txt'))
+#splitting the data and storing it in 4 arrays 
+    #a)train input    b)train output    c)test input    d)test output
+a,b,c,d = test_train_split(file_list,energy_list,split=99)
+
+#loading the symmetry function vectors from the corresponding files from which energy value is taken
+test_xy = ([(np.loadtxt(os.path.join('./sym_fun_all_2','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) 
 train_xy = ([(np.loadtxt(os.path.join('./sym_fun_all_2','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
 
-#train set arrays
+#train set arrays-----reshaping input data in the form of (nx1x70) array and shuffling input and output with the same seed
 inputs,outputs = zip(*train_xy)
 inputs_ = np.asarray([x.reshape(len(x),1,70) for x in inputs]) #to np arrays
 outputs_ = np.asarray([*outputs])
+np.random.seed(60)
 r = random.random()
 random.shuffle(inputs_,lambda:r)
 random.shuffle(outputs_,lambda:r)
 
-
-#test set arrays
+#test set arrays-----reshaping input data in the form of (nx1x70) array and shuffling input and output with the same seed
 inputs2,outputs2 = zip(*test_xy)
 inputs2_= np.asarray([x.reshape(len(x),1,70) for x in inputs2])
 outputs2_= np.asarray([*outputs2])
-print(outputs2_)
 r = random.random()
 random.shuffle(inputs2_,lambda:r)
 random.shuffle(outputs2_,lambda:r)
-print(outputs2_)
-
-
-
 
 #min max normalization----------------------------------------------------------
-g_max_array = []
-for i in range(len(inputs_)):
-    g_max_array.append(np.max(inputs_[i],axis=0))
-g_max_array_np = np.array(g_max_array)
-print(g_max_array_np.shape)
-g_max = np.max(g_max_array_np,axis=0)
-print(g_max.shape)
-print(g_max)
+def min_max_norm(G):
+    g_max_array = []
+    for i in range(len(inputs_)):
+        g_max_array.append(np.max(inputs_[i],axis=0))                 #finding max vector of each dataset in training set
+    g_max_array_np = np.array(g_max_array)
+    G_max = np.max(g_max_array_np,axis=0)                             #finding max vector of the entire training set
 
-g_min_array = []
-for i in range(len(inputs_)):
-    g_min_array.append(np.min(inputs_[i],axis=0))
-g_min_array_np = np.array(g_min_array)
-print(g_min_array_np.shape)
-g_min = np.min(g_min_array_np,axis=0)
-print(g_min.shape)
-print(g_min)
+    g_min_array = []
+    for i in range(len(inputs_)):
+        g_min_array.append(np.min(inputs_[i],axis=0))                 #finding min vector of each dataset in training set
+    g_min_array_np = np.array(g_min_array)
+    G_min = np.min(g_min_array_np,axis=0)                             #finding min vector of the entire training set
 
+    for i in range(len(G)):
+        for j in range(len(G[i])):
+            G[i][j] = (2*(G[i][j]-G_min)/(G_max-G_min))-1             #scales the G vector between [-1,1]
 
-for i in range(len(inputs_)):
-    for j in range(len(inputs_[i])):
-        inputs_[i][j] = (2*(inputs_[i][j]-g_min)/(g_max-g_min))-1
+min_max_norm(inputs_)
+min_max_norm(inputs2_)
 
-for i in range(len(inputs2_)):
-    for j in range(len(inputs2_[i])):
-        inputs2_[i][j] = (2*(inputs2_[i][j]-g_min)/(g_max-g_min))-1
-#-------------------------------------------------------------------------------
-#exit(0)
-#print(outputs)
-#print(inputs2_[0])
-#exit(0)
-#print((test_xy[1:3]))
-#print(len(train_xy))
-#exit(0)
 #-------------------------------------------------------------------------------
 #Activation functions
 #-------------------------------------------------------------------------------
@@ -133,7 +112,8 @@ def linear(z):
 #-------------------------------------------------------------------------------
 def d_sigmoid(s):
     #derivative of sigmoid
-    return sigmoid(s) * (1-sigmoid(s))
+    #return sigmoid(s) * (1-sigmoid(s))
+    return s * (1-s)
 
 def d_ReLU(s):
     #derivative of ReLU
@@ -141,7 +121,8 @@ def d_ReLU(s):
 
 def d_tanh(s):
     #derivative of tanh
-    return 1-((np.tanh(s))**2)
+    #return 1-((np.tanh(s))**2)
+    return 1 - (s**2)
 
 def d_linear(s):
     return 1
@@ -152,10 +133,6 @@ ActivationFunction = {
     'tanh'    : (tanh,d_tanh),
     'linear'  : (linear,d_linear),
     }
-
-# E_nn = np.array([1,2,3])
-# E_ref = np.array([1,1,1])
-
 
 def RMSE(predictions,references):
     m = len(references)     
@@ -170,8 +147,7 @@ def MSE(predictions,references):
     return 0.5*np.sum(np.square((predictions-references)))/m
 
 def d_MSE(predictions,references):
-    return(predictions-references)
-
+    return np.asarray(predictions-references)
 
 #-------------------------------------------------------------------------------
 
@@ -188,13 +164,14 @@ class NeuralNetwork:
         self.layer1_der_activation = ActivationFunction[activations[0]][1]
         self.layer2_der_activation = ActivationFunction[activations[1]][1]
         self.output_der_activation = ActivationFunction[activations[-1]][1]
-
+        
         self.weights1 = np.random.randn(self.input_nodes,self.hidden_layer1_nodes)
         self.bias1 = np.zeros((1,self.hidden_layer1_nodes))
         self.weights2 = np.random.randn(self.hidden_layer1_nodes,self.hidden_layer2_nodes)
         self.bias2 = np.zeros((1,self.hidden_layer2_nodes))
         self.weights3 = np.random.randn(self.hidden_layer2_nodes,self.output_nodes)
         self.bias3 = np.zeros((1,self.output_nodes))
+        
 
     def __repr__(self):
         return f"This is a {self.input_nodes}-{self.hidden_layer1_nodes}-{self.hidden_layer2_nodes}-{self.output_nodes} neural network"
@@ -208,7 +185,7 @@ class NeuralNetwork:
 
     
     def backward_prop(self,x,e_nn,e_ref):
-        #output layer
+
         self.error_output_layer = d_MSE(e_nn,e_ref)
         self.delta_output_layer = self.error_output_layer * self.output_der_activation(e_nn)
         #layer 2
@@ -219,9 +196,9 @@ class NeuralNetwork:
         self.delta_layer1 = self.error_layer1 * self.layer1_der_activation(self.layer1)
 
         #weight update term(derivatives)
-        dJdw1 =  x.T.dot(self.delta_layer1)
+        dJdw1 =  (x.T).dot(self.delta_layer1)
         dJdw2 =  (self.layer1.T).dot(self.delta_layer2)
-        dJdw3 =  self.layer2.T.dot(self.delta_output_layer)
+        dJdw3 =  (self.layer2.T).dot(self.delta_output_layer)
 
         dJdb1 = self.delta_layer1
         dJdb2 = self.delta_layer2
@@ -290,9 +267,6 @@ def numerical_gradients(nn,x,e_nn,e_ref):
     nn.set_parameters(parameter_values)
 
     return numerical_gradient_values
-
-
-
 #------------------------------------------------------------------------------- dec 19 night
 def nn_switcher(x):
     """
@@ -342,7 +316,9 @@ def structure_forward_prop(a,nn1,nn2):
     output=[]
     index = nn_switcher(a)
     for i in range(len(a)):
-        if i<= (index-1):        
+        
+        if i<= (index-1):
+                      
             output.append(nn1.forward_prop(a[i]))
         else:
             output.append(nn2.forward_prop(a[i]))
@@ -378,51 +354,45 @@ def momentum(beta,nn1,nn2,a,e_ref,learning_rate):
     nn2.NN_optimize(*v_params[6:],learning_rate)
 
 
-
-
 def structure_backward_prop(a,nn1,nn2,output,e_ref,learning_rate):#try only for bkwd prop sum
     w1_t,w1_o,w2_t,w2_o,w3_t,w3_o  = weight_array_init(nn1)
     b1_t,b1_o,b2_t,b2_o,b3_t,b3_o  =  bias_array_init(nn1)
     index = nn_switcher(a)
-    #print(index)
     for i in range(len(a)):
         if i<= (index-1):
-            w1_t += nn1.backward_prop(a[i],output,e_ref)[0]    
-            w2_t += nn1.backward_prop(a[i],output,e_ref)[1]          
-            w3_t += nn1.backward_prop(a[i],output,e_ref)[2]
-            b1_t += nn1.backward_prop(a[i],output,e_ref)[3]    
-            b2_t += nn1.backward_prop(a[i],output,e_ref)[4]          
-            b3_t += nn1.backward_prop(a[i],output,e_ref)[5]
+            grad_params_nn1 = nn1.backward_prop(a[i],output,e_ref)
+            w1_t += grad_params_nn1[0]    
+            w2_t += grad_params_nn1[1]          
+            w3_t += grad_params_nn1[2]
+            b1_t += grad_params_nn1[3]    
+            b2_t += grad_params_nn1[4]          
+            b3_t += grad_params_nn1[5]
         else:
-            w1_o += nn2.backward_prop(a[i],output,e_ref)[0]
-            w2_o += nn2.backward_prop(a[i],output,e_ref)[1]            
-            w3_o += nn2.backward_prop(a[i],output,e_ref)[2]
-            b1_o += nn2.backward_prop(a[i],output,e_ref)[3]
-            b2_o += nn2.backward_prop(a[i],output,e_ref)[4]            
-            b3_o += nn2.backward_prop(a[i],output,e_ref)[5]  
-    #val = len(a)-index
+            grad_params_nn2 = nn2.backward_prop(a[i],output,e_ref)
+            w1_o += grad_params_nn2[0]
+            w2_o += grad_params_nn2[1]            
+            w3_o += grad_params_nn2[2]
+            b1_o += grad_params_nn2[3]
+            b2_o += grad_params_nn2[4]            
+            b3_o += grad_params_nn2[5]  
+    val = len(a)-index
     w_b_parameters = [w1_t,w2_t,w3_t,b1_t,b2_t,b3_t,w1_o,w2_o,w3_o,b1_o,b2_o,b3_o]  
     return w_b_parameters
     
 
-
-    # w1_T,w2_T,w3_T,b1_T,b2_T,b3_T,w1_O,w2_O,w3_O,b1_O,b2_O,b3_O =        
-    # nn1.NN_optimize(w1_T,w2_T,w3_T,b1_T,b2_T,b3_T,learning_rate)
-    # nn2.NN_optimize(w1_O,w2_O,w3_O,b1_O,b2_O,b3_O,learning_rate)
-
 '''def train(nn1,nn2,a,e_ref,learning_rate):#working
     index = nn_switcher(a)
     output = sum(structure_forward_prop(a,nn1,nn2))  
-    print('output',output,'e_ref',e_ref) 
-    w1_t,w2_t,w3_t = nn1.backward_prop(a[0],output,e_ref)
-    print('w1',w1_t,'w2',w2_t,'w3',w3_t)
-    nn1.NN_optimize(w1_t,w2_t,w3_t,learning_rate)
-    w1_o,w2_o,w3_o = nn2.backward_prop(a[index],output,e_ref)
-    print('w1',w1_o,'w2',w2_o,'w3',w3_o)
-    nn2.NN_optimize(w1_o,w2_o,w3_o,learning_rate)'''
+    #print('output',output,'e_ref',e_ref) 
+    w1_t,w2_t,w3_t,_,_,_ = nn1.backward_prop(a[0],output,e_ref)
+    #print('w1',w1_t,'w2',w2_t,'w3',w3_t)
+    nn1.NN_optimize(w1_t,w2_t,w3_t,0,0,0,learning_rate)
+    w1_o,w2_o,w3_o,_,_,_ = nn2.backward_prop(a[index],output,e_ref)
+    #print('w1',w1_o,'w2',w2_o,'w3',w3_o)
+    nn2.NN_optimize(w1_o,w2_o,w3_o,0,0,0,learning_rate)'''
 
 
-def train2(nn1,nn2,a,e_ref,learning_rate):#try only
+def train(nn1,nn2,a,e_ref,learning_rate):#try only
     #print(index)
     output = sum(structure_forward_prop(a,nn1,nn2))
     
@@ -431,26 +401,7 @@ def train2(nn1,nn2,a,e_ref,learning_rate):#try only
     nn1.NN_optimize(w1_T,w2_T,w3_T,b1_T,b2_T,b3_T,learning_rate)
     nn2.NN_optimize(w1_O,w2_O,w3_O,b1_O,b2_O,b3_O,learning_rate)
 
-#exit(0)
-
-
-node_list_1 = [70,11,11,1]          #contains the layer sizes
-activations_1 = ['sigmoid','sigmoid','linear']    
-nn_Ti_1 = NeuralNetwork(node_list_1,activations_1)
-nn_O_1  = NeuralNetwork(node_list_1,activations_1)
-
-node_list_2 = [70,11,11,1]          #contains the layer sizes
-activations_2 = ['sigmoid','sigmoid','linear']    
-nn_Ti_2 = NeuralNetwork(node_list_2,activations_2)
-nn_O_2 = NeuralNetwork(node_list_2,activations_2)
-#print('Ti --',nn_Ti,'\n','O --',nn_O)
-
-#node_list_2 = [70,9,9,1]          #contains the layer sizes
-#activations_2 = ['tanh','tanh','linear']    
-nn_Ti_3 = NeuralNetwork(node_list_2,activations_2)
-nn_O_3= NeuralNetwork(node_list_2,activations_2)
-
-
+#exit(02
 
 def stochastic_gradient_descent(nn1,nn2,g_list,e_ref_list,learning_rate,epochs):
     print('############ SGD ################')
@@ -462,11 +413,13 @@ def stochastic_gradient_descent(nn1,nn2,g_list,e_ref_list,learning_rate,epochs):
         for j in range(m):
             e_nn_list.append(sum(structure_forward_prop(g_list[j],nn1,nn2)))
             #print(e_nn_list)
-            train2(nn1,nn2,g_list[j],e_ref_list[j],learning_rate)
+            train(nn1,nn2,g_list[j],e_ref_list[j],learning_rate)
             
         
         #print('predicted',e_nn_list,'\n','reference',e_ref_list) 
-        cost = MSE(np.asarray(e_nn_list),np.asarray(e_ref_list))   
+        #cost = RMSE(np.asarray(e_nn_list),np.asarray(e_ref_list)) 
+        cost = MSE(np.asarray(np.concatenate(e_nn_list).reshape(-1).tolist()),np.asarray(e_ref_list)) 
+          
         print('{0: <6}'.format('epoch ='),i,'----','{0: <4}'.format('lr ='),learning_rate,'----','{0: <6}'.format('cost ='),cost)     
         cost_extract[i] = cost
         #np.random.shuffle(g_list)
@@ -498,7 +451,7 @@ def SGD_momentum(nn1,nn2,g_list,e_ref_list,learning_rate,epochs,beta):
             
         
         #print('predicted',e_nn_list,'\n','reference',e_ref_list) 
-        cost = MSE(np.asarray(e_nn_list),np.asarray(e_ref_list))   
+        cost = MSE(np.asarray(np.concatenate(e_nn_list).reshape(-1).tolist()),np.asarray(e_ref_list)) 
         print('{0: <6}'.format('epoch ='),i,'----','{0: <4}'.format('lr ='),learning_rate,'----','{0: <6}'.format('cost ='),cost)     
         cost_extract[i] = cost
         #np.random.shuffle(g_list)
@@ -548,7 +501,7 @@ def minibatch_gradient_descent(nn1,nn2,g_list,e_ref_list,learning_rate,batchSize
             nn2.NN_optimize(*parameters_nn2,learning_rate) 
             
         #print('predicted',len(e_nn_list),'\n','reference',len(e_ref_list)) 
-        cost = MSE(np.asarray(e_nn_list),np.asarray(e_ref_list))
+        cost = MSE(np.asarray(np.concatenate(e_nn_list).reshape(-1).tolist()),np.asarray(e_ref_list)) 
         print('{0: <6}'.format('epoch ='),i,'----','{0: <4}'.format('lr ='),learning_rate,'----','{0: <6}'.format('cost ='),cost)     
         cost_extract[i] = cost
         r = random.random()
@@ -557,13 +510,45 @@ def minibatch_gradient_descent(nn1,nn2,g_list,e_ref_list,learning_rate,batchSize
         
     return cost_extract,learning_rate
 
+def weight_initialize(nn,w_1,w_2,w_3):
+    nn.weights1 = w_1
+    nn.weights2 = w_2
+    nn.weights3 = w_3
 
-cost_variation_mbgd,lr_mbgd = minibatch_gradient_descent(nn_Ti_1,nn_O_1,inputs2_,outputs2_,learning_rate=0.00006,batchSize=30,epochs=160)
+Ti_weights = np.load('dict_ti_weights.npz')
+O_weights = np.load('dict_O_weights.npz')
+w1_ti = Ti_weights['w1']
+w2_ti = Ti_weights['w2']
+w3_ti = Ti_weights['w3']
+w1_ox = O_weights['w1']
+w2_ox = O_weights['w2']
+w3_ox = O_weights['w3']
 
-cost_variation_mom,lr_mom = SGD_momentum(nn_Ti_2,nn_O_2,inputs2_,outputs2_,learning_rate=0.00006,epochs=160,beta=0.99)
+node_list_1 = [70,9,9,1]          #contains the layer sizes
+activations_1 = ['tanh','tanh','linear']  
+np.random.seed(113)  
+nn_Ti_1 = NeuralNetwork(node_list_1,activations_1)
+weight_initialize(nn_Ti_1,w1_ti,w2_ti,w3_ti)
+nn_O_1  = NeuralNetwork(node_list_1,activations_1)
+weight_initialize(nn_O_1,w1_ox,w2_ox,w3_ox)
+#print(nn_Ti_1.weights3)
 
+node_list_2 = [70,9,9,1]          #contains the layer sizes
+activations_2 = ['tanh','tanh','linear']    
+np.random.seed(1)
+nn_Ti_2 = NeuralNetwork(node_list_2,activations_2)
+weight_initialize(nn_Ti_2,w1_ti,w2_ti,w3_ti)
+nn_O_2 = NeuralNetwork(node_list_2,activations_2)
+weight_initialize(nn_O_2,w1_ox,w2_ox,w3_ox)
 
-cost_variation_sgd,lr_sgd = stochastic_gradient_descent(nn_Ti_3,nn_O_3,inputs2_,outputs2_,learning_rate=0.00005,epochs=160)
+#node_list_2 = [70,9,9,1]          #contains the layer sizes
+#activations_2 = ['tanh','tanh','linear']    
+#np.random.seed(115)
+nn_Ti_3 = NeuralNetwork(node_list_2,activations_2)
+weight_initialize(nn_Ti_3,w1_ti,w2_ti,w3_ti)
+#np.random.seed(213)
+nn_O_3 = NeuralNetwork(node_list_2,activations_2)
+weight_initialize(nn_O_3,w1_ox,w2_ox,w3_ox)
 
 def predict_energy(g_list,e_ref_list):
     #r = random.random()
@@ -572,30 +557,53 @@ def predict_energy(g_list,e_ref_list):
     m = len(e_ref_list)
 
     e_predicted_list = []
+    e_predicted_list_2 = []
     for j in range(m):
-        e_predicted_list.append(sum(structure_forward_prop(g_list[j],nn_Ti_2,nn_O_2)))
+        e_predicted_list.append(sum(structure_forward_prop(g_list[j],nn_Ti_3,nn_O_3)))
+        ##e_predicted_list_2.append([(*structure_forward_prop(g_list[j],nn_Ti_3,nn_O_3))])
+        ##e_predicted_list_2.append('#####################')
         #print(e_predicted_list)
     print('#######################################################','\n')
     #print('predicted',np.concatenate(e_predicted_list).reshape(-1).tolist(),'\n\n','reference',e_ref_list)
-    print([(a,b) for a,b in zip(np.concatenate(e_predicted_list).reshape(-1).tolist(),e_ref_list)])
+    ##print([('p',a,'ref',b,'err',c) for a,b,c in zip(np.concatenate(e_predicted_list).reshape(-1).tolist(),e_ref_list,np.concatenate(e_predicted_list).reshape(-1).tolist()-e_ref_list)])
+    ##print((np.concatenate(e_predicted_list).reshape(-1).tolist()-e_ref_list).tolist())
+    ##print(e_predicted_list_2)
     print('#######################################################','\n')
-    cost = MSE(np.asarray(e_predicted_list),np.asarray(e_ref_list))
-    print(cost)
-    return e_predicted_list,e_ref_list
+    test_error = (np.concatenate(e_predicted_list).reshape(-1).tolist()-e_ref_list).tolist()
+    print('mse',(np.mean(np.square(test_error))))
+    #cost = RMSE(np.asarray(e_predicted_list),np.asarray(e_ref_list))
+    #print(cost)
+    return e_predicted_list,e_ref_list,test_error
 
-x,y = predict_energy(inputs2_,outputs2_)
+predict_energy(inputs2_,outputs2_)
+epochs_val = 60
+##predict_energy(inputs_,outputs_)
+#cost_variation_mbgd,lr_mbgd = minibatch_gradient_descent(nn_Ti_1,nn_O_1,inputs2_,outputs2_,learning_rate=3e-5,batchSize=50,epochs=epochs_val)
+#cost_variation_mom,lr_mom = SGD_momentum(nn_Ti_2,nn_O_2,inputs2_,outputs2_,learning_rate=3e-5,epochs=epochs_val,beta=0.75)                      
+cost_variation_sgd,lr_sgd = stochastic_gradient_descent(nn_Ti_3,nn_O_3,inputs2_,outputs2_,learning_rate=1e-5,epochs=epochs_val)
 
+
+
+
+x,y,z = predict_energy(inputs2_,outputs2_)
+print(x)
 
 x_ = (np.concatenate(x).reshape(-1))
+print(x_.tolist())
+print(outputs2_)
+print(x_.tolist()-outputs2_)
+val = np.mean(np.square(x_.tolist()-outputs2_))
+print(val)
+#exit(0)
 toc = time.time()
 #exit(0)
-x_axis = np.linspace(0,160,160)
+x_axis = np.linspace(0,epochs_val,epochs_val)
 
 if __name__ == '__main__':
     fig = plt.figure(figsize = (6,4),dpi =150)
     plt.plot(x_axis,cost_variation_sgd,'.-b',label='SGD')
-    plt.plot(x_axis,cost_variation_mbgd,'.-r',label='minibatch GD')
-    plt.plot(x_axis,cost_variation_mom,'.:y',label='SGD momentum')
+    #plt.plot(x_axis,cost_variation_mbgd,'.-r',label='minibatch GD')
+    #plt.plot(x_axis,cost_variation_mom,'.:y',label='SGD momentum')
     plt.xlabel('epochs')
     plt.ylabel('cost')
     plt.legend()
@@ -621,6 +629,33 @@ if __name__== '__main__':
     plt.show()
     fig.tight_layout()
     fig.savefig('predict_v_reference_test_set.png')
+
+fig = plt.figure(figsize = (7,4),dpi =150)
+if __name__== '__main__':
+    plt.plot(z,'.:b',label='reference')
+    plt.xlabel('m')
+    plt.ylabel('Error')
+    plt.legend()
+    plt.title('Test set error')
+    #plt.ylim(-19945,-19975)
+    plt.show()
+    fig.tight_layout()
+    fig.savefig('testset error.png')
+
+
+if __name__== '__main__':
+    fig, ax = plt.subplots()
+    plt.scatter(y,x_)
+    ax.set_xlabel('ANN energy')
+    ax.set_ylabel('DFT energy')
+    ax.legend()
+    ax.set_title('ANN v DFT')
+    ax.set_aspect('equal','datalim')
+    #plt.ylim(-19945,-19975)
+    plt.show()
+    fig.tight_layout()
+    fig.savefig('ANN_v_DFT.png')
+
 
 
 print('Time taken =',str((toc-tic)) + 'sec')
