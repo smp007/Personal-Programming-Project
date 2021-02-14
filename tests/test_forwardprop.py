@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.nnpp.neural_network import(
+from src.nnpp.neural_network2 import(
     NeuralNetwork,
     sigmoid,
     ReLU,
@@ -21,7 +21,7 @@ def test_forward_prop_small_network():
     x = np.array([1,1,1,1])          #input
     y = [0.94533048]                 #preknown output
     node_list = [4,3,3,1]
-    activations = [sigmoid,sigmoid,sigmoid]
+    activations = ['sigmoid','sigmoid','sigmoid']
     nn_test1 = NeuralNetwork(node_list,activations)
     weights_init(nn_test1)          #Setting weights to constant value = 1
     y_test = nn_test1.forward_prop(x)
@@ -34,7 +34,7 @@ def test_forward_prop_big_network_1():
     x = np.ones((1,70))             #input
     y = [0.99995458]                #preknown output
     node_list = [70,10,10,1]    
-    activations = [sigmoid,sigmoid,sigmoid]
+    activations = ['sigmoid','sigmoid','sigmoid']
     nn_test2 = NeuralNetwork(node_list,activations)
     weights_init(nn_test2)          #Setting weights to constant value = 1
     y_test = nn_test2.forward_prop(x)
@@ -46,7 +46,7 @@ def test_forward_prop_big_network_2():
     x = np.ones((1,70))             #input
     y = [9.99954602]                #preknown output
     node_list = [70,10,10,1]
-    activations = [sigmoid,sigmoid,linear]
+    activations = ['sigmoid','sigmoid','linear']
     nn_test3 = NeuralNetwork(node_list,activations)
     weights_init(nn_test3)          #Setting weights to constant value = 1
     y_test = nn_test3.forward_prop(x)
@@ -58,11 +58,11 @@ def test_forward_prop_big_network_3():
     x = np.ones((1,70))             #input
     y = [1.76159416]                #preknown output
     node_list = [70,2,2,1]    
-    activations = [sigmoid,sigmoid,linear]
+    activations = ['sigmoid','sigmoid','linear']
     nn_test4 = NeuralNetwork(node_list,activations)
     weights_init(nn_test4)          #Setting weights to constant value = 1
     y_test = nn_test4.forward_prop(x)
-    assert np.isclose(y_test,y)  
+    assert np.isclose(y_test,y)
 
 
 
@@ -70,9 +70,9 @@ def test_forward_prop_big_network_4():
     '''testing forward prop in 70-10-10-1 network
     linear--linear--linear'''
     x = np.ones((1,70))             #input
-    y = [7000]                      #preknown output(when input and weights are array of ones,the output will be the product of number of nodes in each layer)
-    node_list = [70,10,10,1]    
-    activations = [linear,linear,linear]
+    y = [3500]                      #preknown output(when input and weights are array of ones and activation is linear,the output will be the product of number of nodes in each layer)
+    node_list = [70,5,10,1]    
+    activations = ['linear','linear','linear']
     nn_test5 = NeuralNetwork(node_list,activations)
     weights_init(nn_test5)          #Setting weights to constant value = 1
     y_test = nn_test5.forward_prop(x)
