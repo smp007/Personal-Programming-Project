@@ -12,7 +12,7 @@ Uses the trained neural network to predict the energy for the test dataset and g
 # ==================================================================================================
 # imports
 # --------------------------------------------------------------------------------------------------
-from neural_network2 import*
+from neural_network import*
 from symmetry import *
 from reader import*
 # ==================================================================================================
@@ -81,8 +81,8 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots()
     plt.plot(y,x,'o:k')
-    ax.set_xlabel('ANN energy')
-    ax.set_ylabel('DFT energy')
+    ax.set_xlabel('ANN energy (eV)')
+    ax.set_ylabel('DFT energy (eV)')
     ax.set_title('ANN v DFT')
     plt.grid('True')     
     fig.tight_layout()
@@ -94,10 +94,10 @@ if __name__ == "__main__":
     c,d,e = predict_energy(inputs2_,outputs2_,nn_Ti,nn_O)
     q_squared = correlation_coefficient(c,d)
 
-
-    print('\n##################        RESULTS        ########################\n')
+    print("\n-----------------------------     NN-Validation      ---------------------------------\n")
+    print('\n##################                  RESULTS                  ########################\n')
     print('{0: <25}'.format('MSE of test set(eV/atom)'),'=',0.5*np.mean(np.square(e)),'\n')
     print('{0: <25}'.format('R squared value'),'=',r_squared,'\n')
     print('{0: <25}'.format('Q squared value'),'=',q_squared,'\n')
     print('{0: <25}'.format('Correlation coefficient'),'=',r_squared/q_squared,'\n')
-    print('###################################################################\n')
+    print('########################################################################################\n')
