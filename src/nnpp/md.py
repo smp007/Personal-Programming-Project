@@ -21,7 +21,7 @@ from visualizer import*
 
 
 #Calling the neural network and assigning the weights of trained NN
-trained_params = np.asarray(load_params())
+trained_params = np.asarray(load_params('trained'))
 node_list = [70,11,11,1]          #contains the layer sizes
 activations = ['sigmoid','sigmoid','linear']
 nn_Ti = NeuralNetwork(node_list,activations)
@@ -31,17 +31,18 @@ initialize_params(nn_O,*trained_params[6:])
 
 path = './md_structure_ref'
 file_list = sorted(os.listdir(path))
-_,_,atom_data = xsf_reader(file_list[1])
-#print(atom_data)
+_,_,atom_data = xsf_reader(file_list[2])
+
 n = len(atom_data)
 Atoms = [atom_data[i][0] for i in range(len(atom_data)) ]
-#print(Atoms)
-
 
 mass_Ti = 47.867 
-mass_O = 15.999 
+mass_O = 15.999  
+m_array = np.asarray([47.867,47.867,15.999,15.999,15.999,15.999]).reshape(1,6)
 
 enn_array= []
+KE_array = []
+PE_array = []
 
 class MolecularDynamics:
     """
@@ -57,7 +58,7 @@ class MolecularDynamics:
         self.positions = np.zeros((self.num_of_atoms,self.dimension))
         self.velocities = np.zeros((self.num_of_atoms,self.dimension))
         self.Kb = 8.617330337217213e-05 
-        self.T = 500 
+        self.T = 1000 
 
     def initial_positions(self):
         """
@@ -77,12 +78,10 @@ class MolecularDynamics:
         val1 = np.sqrt((self.Kb*self.T)/(mass_Ti))
         val2 = np.sqrt((self.Kb*self.T)/(mass_O))
         size = self.num_of_atoms
-        index = nn_switcher(self.positions)
-        #print(index)
-        self.velocities[:index] = np.random.normal(loc=0,scale = val1,size =(index,self.dimension))
-        self.velocities[index:] = np.random.normal(loc=0,scale = val2,size =(size-index,self.dimension))
-        #self.velocities = np.random.normal(loc=0,scale = val,size =(self.num_of_atoms,self.dimension))
-        #print(self.velocities)
+        index = nn_switcher(self.positions)   #finding index to switch atomtype from 1 to 2
+        self.velocities[:index] = np.random.normal(loc=0,scale = val1,size =(index,self.dimension))      #initial velocities for atomtype1 -- Ti
+        self.velocities[index:] = np.random.normal(loc=0,scale = val2,size =(size-index,self.dimension)) #initial velocities for atomtype2 -- O
+
         return 0
 
     def descriptors(self,atom_data):
@@ -119,7 +118,6 @@ class MolecularDynamics:
         min_max_norm(G_,g_min,g_max)
 
         e_nn,e_i_array = predict_energy_2(np.asarray(G_),nn_Ti,nn_O)
-        #print(e_nn)
         enn_array.append(e_nn[0])
 
         dEi_dG = np.asarray(structure_nn_gradient(e_i_array,nn_Ti,nn_O))
@@ -183,7 +181,7 @@ class MolecularDynamics:
         #print('current_pos',previous_position)
         #print('next_pos',next_position)
 
-        return next_position
+        return next_position,Vel
 
     def final_position(self):
         """Functions returns the current atomic positions"""
@@ -197,6 +195,7 @@ class MolecularDynamics:
 
     def velocity_verlet_a(self,forces,acc):
         """
+        Implements the velocity verlet using 2 functions
         Arguments:
         forces -- force vector(3 components) on each atoms
         acc -- accelration.
@@ -230,7 +229,7 @@ class MolecularDynamics:
     #-----------------------------------------------------------------------------------------------
 
 
-f = open('TiO2_tryx.xyz',"w+") #opening an xyz file tostore positions of each timesteps
+f = open('TiO2_tryx.xyz',"w+") #opening an xyz file to store positions of each timesteps
 frame=0
 def xyz_writer(A,frame):
     """
@@ -248,124 +247,161 @@ def xyz_writer(A,frame):
         f.write(str(atom[0])+'\t'+str(atom[1])+'\t'+str(atom[2])+'\t'+str(atom[3])+'\n')
     return 0
 
+
 #Initializing values--------------------------------------------------------------------------------
 fs = 0.09822694788464063 #femtosecond
 start_t = 0
 stop_t  = 20 * fs
 delta_t = 1 * fs
-visualize(atom_data)     #calling visualize module to plot initial positon
-md = MolecularDynamics() #making object for md simulations
+if __name__ == '__main__':
+
+    visualize(atom_data)     #calling visualize module to plot initial positon
+    md = MolecularDynamics() #making object for md simulations
 
 
-print("\n--------------------------------MOLECULAR DYNAMICS SIMULATION----------------------------------\n")
-print('##########  Updates position after each timestep using the Neural network potential.  ############\n\n')
-tic = time.time()
+    print("\n--------------------------------MOLECULAR DYNAMICS SIMULATION----------------------------------\n")
+    print('##########  Updates position after each timestep using the Neural network potential.  ############\n\n')
+    tic = time.time()
 
-#printing the initial positions of the 6 atoms------------------------------------------------------
-B = []
-B.append([i[1:] for i in atom_data])   #data from a random xsf file
-initial_state = np.asarray(B[0])
-print('#####################################')
-print('initial position \n------------------------------------\n',initial_state)
-print('#####################################')
-#---------------------------------------------------------------------------------------------------
-
-
-md.initial_positions()   #Initial conditions
-md.initial_velocities()
-
-n_steps = (stop_t-start_t)/delta_t
-count=0
-integration = 'Velocity verlet'
-print('------------------------------------')
-print('Integrator ----',integration)
-print('------------------------------------\n')
-
-#Position update with euler explicit ---------------------------------------------------------------
-if integration == 'Euler method':
-    while count<n_steps:
-
-        G_array,dG_dr_array = md.descriptors(atom_data)
-        force_array,enn_val = md.force_predict(G_array,dG_dr_array)
-        new_position = md.position_update(force_array)
-
-        print('{0: <6}'.format('time ='),'{:2}'.format(count),'fs','----','{0: <4}'.format('E_pot ='),'{:1.4f}'.format(*enn_val),' eV')     
-        #print(count,'-------',enn_val,'\n')
-
-        Atoms = np.asarray(Atoms).reshape(n,1)
-        A = np.hstack((Atoms,new_position)).tolist()
-        for i in range(len(A)):
-            for j in range(len(A[i])):
-                if j>0:
-                    A[i][j]= round(float(A[i][j]),6)
-        xyz_writer(A,frame)
-
-        atom_data = A
-        frame +=1
-        count+=1
-
-#Position update with velocity verlet algorithm ----------------------------------------------------
-elif integration == 'Velocity verlet':
-    while count<n_steps:
-
-        G_array,dG_dr_array = md.descriptors(atom_data)
-        force_array,enn_val = md.force_predict(G_array,dG_dr_array)
-        accelerations1 = md.acceleration(force_array)
-        new_position,old_v = md.velocity_verlet_a(force_array,accelerations1)
-        
-        print('{0: <6}'.format('time ='),'{:2}'.format(count),'fs','----','{0: <4}'.format('E_pot ='),'{:1.4f}'.format(*enn_val),' eV')     
+    #printing the initial positions of the 6 atoms------------------------------------------------------
+    B = []
+    B.append([i[1:] for i in atom_data])   #data from a random xsf file
+    initial_state = np.asarray(B[0])
+    print('#####################################')
+    print('initial position \n------------------------------------\n',initial_state)
+    print('#####################################\n')
+    #---------------------------------------------------------------------------------------------------
 
 
-        Atoms = np.asarray(Atoms).reshape(n,1)
-        A = np.hstack((Atoms,new_position)).tolist()
+    md.initial_positions()   #Initial conditions
+    md.initial_velocities()
 
-        for i in range(len(A)):
-            for j in range(len(A[i])):
-                if j>0:
-                    A[i][j]= round(float(A[i][j]),6)
+    n_steps = (stop_t-start_t)/delta_t
+    count=0
+    integration = 'Velocity verlet'
+    print('------------------------------------')
+    print('Integrator ----',integration)
+    print('------------------------------------\n')
 
-        G_array2,dG_dr_array2 = md.descriptors(A)
-        new_force_array,_ = md.force_predict(G_array2,dG_dr_array2)
-        accelerations2 = md.acceleration(new_force_array)    
-        new_V = md.velocity_verlet_b(accelerations1,accelerations2)
+    #Position update with euler explicit ---------------------------------------------------------------
+    if integration == 'Euler method':
+        while count<n_steps:
+            #calculating force and new positions using trained NN
 
-        xyz_writer(A,frame)
+            G_array,dG_dr_array = md.descriptors(atom_data)
+            force_array,enn_val = md.force_predict(G_array,dG_dr_array)
+            new_position,new_v = md.position_update(force_array)
+            v_norm = np.asarray([np.linalg.norm(a) for a in new_v]).reshape(-1) #norm of velocity to find KE
+            kin_e = 0.5*m_array*v_norm                                          #calculates KE
+            KE_array.append(sum(kin_e[0]))
 
-        atom_data = A
-        frame +=1
-        count+=1
+            print('{0: <6}'.format('time ='),'{:2}'.format(count),'fs','----','{0: <4}'.format('E_pot ='),'{:1.4f}'.format(*enn_val),' eV')     
+            #print(count,'-------',enn_val,'\n')
+
+            Atoms = np.asarray(Atoms).reshape(n,1)
+            A = np.hstack((Atoms,new_position)).tolist()
+            for i in range(len(A)):                                  #nested loop to round the values except the char datatype (atomtype)
+                for j in range(len(A[i])):
+                    if j>0:
+                        A[i][j]= round(float(A[i][j]),6)
+            xyz_writer(A,frame)                                      #writes frame details of current step to xyz file
+
+            atom_data = A
+            frame +=1
+            count+=1
+
+    #Position update with velocity verlet algorithm ----------------------------------------------------
+    elif integration == 'Velocity verlet':
+        while count<n_steps:
+            #calculating force and new positions using trained NN
+
+            G_array,dG_dr_array = md.descriptors(atom_data)
+            force_array,enn_val = md.force_predict(G_array,dG_dr_array)
+            accelerations1 = md.acceleration(force_array)
+            new_position,old_v = md.velocity_verlet_a(force_array,accelerations1)
+            
+            print('{0: <6}'.format('time ='),'{:2}'.format(count),'fs','----','{0: <4}'.format('E_pot ='),'{:1.4f}'.format(*enn_val),' eV')     
 
 
-#printing the final positions of the 6 atoms--------------------------------------------------------
-final_state = md.final_position()
-visualize(atom_data)
-print('\n\n#####################################')
-print('final position \n------------------------------------\n',final_state)
-print('#####################################')
+            Atoms = np.asarray(Atoms).reshape(n,1)
+            A = np.hstack((Atoms,new_position)).tolist()
 
-print('\nPositions of each atoms after each time step have been saved in xyz file format.')
-toc = time.time()
-print('--------------------------------------------------------------------------------------------')
-print('Time taken =',str((toc-tic)) + 'sec')
-print('--------------------------------------------------------------------------------------------\n')
+            for i in range(len(A)):                                          #nested loop to round the values except the char datatype (atomtype)
+                for j in range(len(A[i])):
+                    if j>0:
+                        A[i][j]= round(float(A[i][j]),6)
 
-#---------------------------------------------------------------------------------------------------
+            G_array2,dG_dr_array2 = md.descriptors(A)
+            new_force_array,_ = md.force_predict(G_array2,dG_dr_array2)
+            accelerations2 = md.acceleration(new_force_array)    
+            new_V = md.velocity_verlet_b(accelerations1,accelerations2)
 
-'''
-print(enn_array)
+            v_norm = np.asarray([np.linalg.norm(a) for a in new_V]).reshape(-1) #norm of velocity to find KE
+            kin_e = 0.5*m_array*v_norm                                          #calculates KE
+            KE_array.append(sum(kin_e[0]))
 
-filtered_lst= [v for i, v in enumerate(enn_array) if i % 2 == 0]
-print(filtered_lst)
-print(len(filtered_lst))
+            xyz_writer(A,frame)                                                #writes frame details of current step to xyz file
+            atom_data = A
+            frame +=1
+            count+=1
 
-fig = plt.figure(figsize = (7,4),dpi =150)
-plt.plot(filtered_lst,'.:b')
-plt.xlabel('m')
-plt.ylabel('energy')
-plt.title('E-v')
-fig.tight_layout()
-plt.grid('True')    
-plt.show()
 
-exit(0)
-'''
+    if integration=='Velocity verlet':
+        PE_array = [v for i, v in enumerate(enn_array) if i % 2 == 0]               #taking alternate values  only due to half velocity 
+    else:#euler case
+        PE_array = enn_array
+
+    TE_array = np.asarray(PE_array)+np.asarray(KE_array)
+
+    #printing the final positions of the 6 atoms--------------------------------------------------------
+    final_state = md.final_position()
+    visualize(atom_data)
+    print('\n\n#####################################')
+    print('final position \n------------------------------------\n',final_state)
+    print('#####################################')
+
+    print('\nPositions of each atoms after each time step have been saved in xyz file format.')
+    toc = time.time()
+    print('--------------------------------------------------------------------------------------------')
+    print('Time taken =',str((toc-tic)) + 'sec')
+    print('--------------------------------------------------------------------------------------------\n')
+
+    #plotting energy
+
+    fig = plt.figure(figsize = (6,4),dpi =150)                                                                          
+    plt.plot(PE_array,label='P.E')  
+    plt.xlabel('frame')
+    plt.ylabel('Potential Energy (eV)')
+    plt.legend()
+    plt.title('PE variation')
+    fig.tight_layout()
+    plt.show()
+    fig.savefig('plots/PE.png')
+
+
+    fig = plt.figure(figsize = (6,4),dpi =150)                                                                          
+    plt.plot(KE_array,label='K.E')  
+    plt.xlabel('frame')
+    plt.ylabel('Kinetic Energy (eV)')
+    plt.legend()
+    plt.title('KE variation')
+    fig.tight_layout()
+    plt.show()
+    fig.savefig('plots/KE.png')
+
+
+
+    fig = plt.figure(figsize = (6,4),dpi =150)                                                                          
+    plt.plot(KE_array,label='K.E') 
+    plt.plot(PE_array,label='P.E',marker='o')  
+    plt.plot(TE_array,label='T.E',marker='+')   
+    plt.xlabel('frame')
+    plt.ylabel('Energy (eV)')
+    plt.legend()
+    plt.title('Energy variation')
+    fig.tight_layout()
+    plt.show()
+    fig.savefig('plots/TE.png')
+
+    #---------------------------------------------------------------------------------------------------
+

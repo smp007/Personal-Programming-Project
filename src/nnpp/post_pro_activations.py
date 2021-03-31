@@ -18,7 +18,7 @@ from reader import*
 if __name__ == "__main__":
     #datainput
 
-    path = './data_set_TiO2+outlier'
+    path = './dataset_TiO2'
     file_list,energy_list,n = data_read(path)
     energy_list2 = ([(a,b) for a,b in zip(energy_list,n)])
 
@@ -26,8 +26,8 @@ if __name__ == "__main__":
     a,b,c,d = test_train_split(file_list,energy_list,split=99)
 
     #loading the symmetry function vectors from the corresponding files from which energy value is taken
-    test_xy = ([(np.loadtxt(os.path.join('./symmetry_functions_demo','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) 
-    train_xy = ([(np.loadtxt(os.path.join('./symmetry_functions_demo','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
+    test_xy = ([(np.loadtxt(os.path.join('./symmetry_txt','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) 
+    train_xy = ([(np.loadtxt(os.path.join('./symmetry_txt','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
 
     #train set arrays-----reshaping input data in the form of (nx1x70) array and shuffling input and output with the same seed
     inputs,outputs = zip(*train_xy)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     tic = time.time()
     fig = plt.figure(figsize = (6,4),dpi =150)                                                                                
     node_list = [70,11,11,1]          #contains the layer sizes
-
+    #case 1 : sigmoid
     activations1 = ['sigmoid','sigmoid','linear']
     tic = time.time()
     nn_Ti_1 = NeuralNetwork(node_list,activations1)
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     toc = time.time()
     plt.plot(x_axis,cost_variation_sgd,'s-r',label='sigmoid;'+' t = '+str(round((toc-tic),1))+' sec')
 
-
+    #case 2 : tanh
     activations2 = ['tanh','tanh','linear'] 
     tic = time.time()
     nn_Ti_2 = NeuralNetwork(node_list,activations2)
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     toc = time.time()
     plt.plot(x_axis,cost_variation_sgd,'p-b',label='tanh;'+' t = '+str(round((toc-tic),1))+' sec')
 
-
+    #case 3 : ReLU
     activations3 = ['ReLU','ReLU','linear'] 
     tic = time.time()
     nn_Ti_3 = NeuralNetwork(node_list,activations3)

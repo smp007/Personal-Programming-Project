@@ -35,6 +35,7 @@ def test_d_cutoff_function_outside_sphere():
     R_c = 6
     assert d_cutoff_function(R2,R_c) == 0
 
+#---------------------------------------------------------------------------------------------------
 
 def test_radial_distribution():
     R_array = np.asarray([1,3,5,7,9])
@@ -51,6 +52,7 @@ def test_angular_distribution():
     assert round(angular_distribution(theeta,R1,R2,R3,eeta,lamda,zeta),6) == 0.033604
 
 
+#components in the derivative of symmetry function--------------------------------------------------
 def test_psi():
     R1,R2,theeta,eeta,lamda,zeta = 1,2,5,0,-1,1
     assert round(psi(theeta,R1,R2,eeta,lamda,zeta),6) == 0.697995
@@ -63,7 +65,7 @@ def test_xhi():
     R1,R_c = 4,6
     assert round(xhi(R1,R_c),5)== -0.01417
 
-#shape check of symmetry function
+#shape check of symmetry function-------------------------------------------------------------------
 
 atom_data = [['Ti', 1.76228668, 1.84079395, 2.39690881],
              ['Ti', 0.0, 0.0, 0.0],

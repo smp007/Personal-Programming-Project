@@ -4,16 +4,15 @@ Neural network module
 ----------------------------------------------------------------------------------------------------
 Builds the neural network for prediction of potential from scratch using numpy.This module does the 
 following tasks,
-    -Reads required attributes of data
+    -Reads required attributes of data (output of symmetry module)
     -Test train split
     -Min-max normalization
     -Shuffles the data frequently
-    -Neural network with different activation functions as well as optimizers(executes the training process)
+    -Neural network with different activation functions 
         -Activation functions - sigmoid,tanh,ReLU
-        -Optimizers - SGD,SGD with momentum,RmsProp,Adam,Minibatch GD
-    -Predicts the Energy
-    -Determines the correlation coefficient
-    -Saves the weights of the trained neural network for further predictions.
+    -Simultaneous training of the NN assembly as we train for the total energy value but update parameters of individual NNs
+        -Optimizers used - SGD,SGD with momentum,RmsProp,Adam,Minibatch GD
+    -Saves the weights of the trained neural networks for further predictions.
 ====================================================================================================
 """
 # ==================================================================================================
@@ -675,7 +674,7 @@ def stochastic_gradient_descent(nn1,nn2,g_list,e_ref_list,learning_rate,epochs):
         e_nn = np.asarray(np.concatenate(e_nn_list).reshape(-1).tolist()) #converting to 1d array and then to list
         e_ref = np.asarray(e_ref_list)
         n = np.asarray(num_atoms)
-        cost = RMSE(e_nn,e_ref,n,errortype='eV_per_structure')          #calculating cost 
+        cost = RMSE(e_nn,e_ref,n,errortype='eV_per_atom')          #calculating cost 
         print('{0: <6}'.format('epoch ='),i,'----','{0: <4}'.format('lr ='),learning_rate,'----','{0: <6}'.format('cost ='),cost)     
         cost_extract[i-1] = cost                                        #extracting cost
         data_shuffle(g_list,e_ref_list)                                 #shuffling data before next epoch
@@ -761,7 +760,7 @@ def RMSprop(nn1,nn2,g_list,e_ref_list,learning_rate,epochs,beta):
         n = np.asarray(num_atoms)
         e_nn = np.asarray(np.concatenate(e_nn_list).reshape(-1).tolist())
         e_ref = np.asarray(e_ref_list)                 
-        cost = RMSE(e_nn,e_ref,n,errortype='eV_per_structure') 
+        cost = RMSE(e_nn,e_ref,n,errortype='eV_per_atom') 
         print('{0: <6}'.format('epoch ='),i,'----','{0: <4}'.format('lr ='),learning_rate,'----','{0: <6}'.format('cost ='),cost)     
         cost_extract[i-1] = cost                             #cost extraction for visualization
         data_shuffle(g_list,e_ref_list)
@@ -813,7 +812,7 @@ def Adam(nn1,nn2,g_list,e_ref_list,learning_rate,epochs,beta1,beta2):
         n = np.asarray(num_atoms)
         e_nn = np.asarray(np.concatenate(e_nn_list).reshape(-1).tolist())   #converting to 1d array and then to list
         e_ref = np.asarray(e_ref_list)          
-        cost = RMSE(e_nn,e_ref,n,errortype='eV_per_structure') 
+        cost = RMSE(e_nn,e_ref,n,errortype='eV_per_atom') 
         print('{0: <6}'.format('epoch ='),i,'----','{0: <4}'.format('lr ='),learning_rate,'----','{0: <6}'.format('cost ='),cost)     
         cost_extract[i-1] = cost
         data_shuffle(g_list,e_ref_list)
@@ -877,21 +876,28 @@ def minibatch_gradient_descent(nn1,nn2,g_list,e_ref_list,learning_rate,batchSize
         n = np.asarray(num_atoms)
         e_nn = np.asarray(np.concatenate(e_nn_list).reshape(-1).tolist())
         e_ref = np.asarray(e_ref_list)          
-        cost = RMSE(e_nn,e_ref,n,errortype='eV_per_structure')          
+        cost = RMSE(e_nn,e_ref,n,errortype='eV_per_atom')          
         print('{0: <6}'.format('epoch ='),i,'----','{0: <4}'.format('lr ='),learning_rate,'----','{0: <6}'.format('cost ='),cost)     
         cost_extract[i-1] = cost
         data_shuffle(g_list,e_ref_list)
     return cost_extract,learning_rate
 
-def load_params():
+def load_params(paramtype):
     """
     Loads the trained(saved) weights to the Neural network.Thereby helps to continue the training process 
     from where it was stopped.After training the saved weights are used for prediction.
+    Arguments:
+    paramtype -- type of param(trained or guess)
     Returns:
     params -- weight/bias params of Ti--NN and O--NN
     """
-    Ti_weights = np.load('params/trained_ti_weights.npz')
-    O_weights = np.load('params/trained_O_weights.npz')
+    if paramtype=='trained':
+        Ti_weights = np.load('params/trained_ti_weights.npz')
+        O_weights = np.load('params/trained_O_weights.npz')
+
+    if paramtype=='guess':
+        Ti_weights = np.load('params/dict_ti_11_weights.npz')
+        O_weights = np.load('params/dict_O_11_weights.npz')        
 
     w1_ti = Ti_weights['w1']
     w2_ti = Ti_weights['w2']
@@ -1028,7 +1034,7 @@ if __name__ == '__main__':
     print('Data loading...this might take few minutes...\n\n')
     
     tic = time.time()
-    path = './data_set_TiO2+outlier'
+    path = './dataset_TiO2'
     file_list,energy_list,n = data_read(path)
     energy_list2 = ([(a,b) for a,b in zip(energy_list,n)])
     ##print(data_read(path)[0][0],data_read(path)[1][0])
@@ -1037,8 +1043,8 @@ if __name__ == '__main__':
     a,b,c,d = test_train_split(file_list,energy_list,split=99)
 
     #loading the symmetry function vectors from the corresponding files from which energy value is taken
-    test_xy = ([(np.loadtxt(os.path.join('./symmetry_functions_demo','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) 
-    train_xy = ([(np.loadtxt(os.path.join('./symmetry_functions_demo','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
+    test_xy = ([(np.loadtxt(os.path.join('./symmetry_txt','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) 
+    train_xy = ([(np.loadtxt(os.path.join('./symmetry_txt','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
 
     #train set arrays-----reshaping input data in the form of (nx1x70) array and shuffling input and output with the same seed
     inputs,outputs = zip(*train_xy)
@@ -1073,9 +1079,11 @@ if __name__ == '__main__':
     initialize_params(nn_Ti_4,*trained_params[0:6])
     nn_O_4 = NeuralNetwork(node_list,activations)
     initialize_params(nn_O_4,*trained_params[6:])
+
+    
     print('The saved weights from the already trained neural network is loaded.\n\n')
     
-    epochs_val = 15
+    epochs_val = 50
     print('----------------------------Training process starts for ',epochs_val,'epochs-----------------------\n')
     #cost_variation_mbgd,lr_mbgd = minibatch_gradient_descent(nn_Ti_4,nn_O_4,inputs_,outputs_,learning_rate=3e-5,batchSize=50,epochs=epochs_val)
     cost_variation_mom,lr_mom = SGD_momentum(nn_Ti_4,nn_O_4,inputs_,outputs_,learning_rate=7e-6,epochs=epochs_val,beta=0.99999) 
@@ -1089,6 +1097,20 @@ if __name__ == '__main__':
     print('-----------------------------Training process ended after',epochs_val,'epochs---------------------')
     print('Time taken =',str((toc-tic)) + 'sec')
     print('-----------------------------------------------------------------------------------------\n')
+
+
+
+    x_axis = np.linspace(0,epochs_val,epochs_val)   
+    fig = plt.figure(figsize = (6,4),dpi =150)    
+    plt.plot(x_axis,cost_variation_mom,label='momentum;  lr=7e-6; '+' $\\beta1$=0.99999')
+    plt.xlabel('epochs')
+    plt.ylabel('cost (eV per atom)')
+    plt.legend()
+    plt.title('Current cost variation with trained weights')
+    fig.tight_layout()
+    plt.grid('True')
+    plt.show()
+    fig.savefig('plots/current state.png')
     exit(0)
 
 

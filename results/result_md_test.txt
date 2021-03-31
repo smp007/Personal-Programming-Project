@@ -1,0 +1,35 @@
+
+------------------------------     Test for MD code      --------------------------------------
+
+#############  Checks whether force in Y direction moves the atoms in Y direction. ###########
+
+
+ie.Only the Y coordinates of each atom chould change from 0 to a particular value
+
+Initial Position :
+
+ [[0. 0. 0.]
+ [1. 0. 0.]
+ [2. 0. 0.]
+ [3. 0. 0.]
+ [4. 0. 0.]
+ [5. 0. 0.]] 
+
+Force at each timestep in Y direction:
+
+ [[0. 1. 0.]
+ [0. 1. 0.]
+ [0. 1. 0.]
+ [0. 1. 0.]
+ [0. 1. 0.]
+ [0. 1. 0.]]
+
+Final position :
+ [[ 0.         25.19620326  0.        ]
+ [ 1.         25.19620326  0.        ]
+ [ 2.         75.38387783  0.        ]
+ [ 3.         75.38387783  0.        ]
+ [ 4.         75.38387783  0.        ]
+ [ 5.         75.38387783  0.        ]]
+--------------------------------------------------------------------------------------------
+

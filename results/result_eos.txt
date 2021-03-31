@@ -1,0 +1,8 @@
+
+
+-----------------Birch-Murnaghan Equation of states of rutile TiO2-------------------------
+Equilibrium volume =  65.1796 eV
+Equilibrium energy =  -4990.3715 Ä³
+Bulk modulus predicted by NN model  =  174.5815 GPa
+Bulk modulus found  using DFT       =  211 GPa
+--------------------------------------------------------------------------------------------

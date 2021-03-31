@@ -1,6 +1,15 @@
+"""
+====================================================================================================
+Activations unit tests
+----------------------------------------------------------------------------------------------------
+Uses a particular input to the activations and then,compares the output of the activations functions 
+and their derivatives with preknown output value.
+====================================================================================================
+"""
+
 import pytest
 import numpy as np
-from src.nnpp.neural_network2 import(
+from src.nnpp.neural_network import(
     sigmoid,d_sigmoid,
     ReLU,d_ReLU,
     tanh,d_tanh,

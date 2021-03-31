@@ -1,6 +1,17 @@
+"""
+====================================================================================================
+Backprop unit tests
+----------------------------------------------------------------------------------------------------
+Calculates the numerical gradient using central difference method and compares it with the derivatives 
+found using the NN's backprop method.If the difference is less than a tolerance,the test is said to 
+have passed.
+====================================================================================================
+
+"""
+
 import pytest
 import numpy as np
-from src.nnpp.neural_network2 import(
+from src.nnpp.neural_network import(
     NeuralNetwork,
     sigmoid,
     ReLU,
@@ -9,8 +20,7 @@ from src.nnpp.neural_network2 import(
     numerical_gradients
 )
 
-
-#Gradient checking--------------------------------------------------------------
+#Gradient checking----------------------------------------------------------------------------------
 def test_gardient_checking_example():
 
     def f(x):
@@ -23,7 +33,7 @@ def test_gardient_checking_example():
 
     assert np.isclose(numeric_gradient,analytical_gradient)
 
-#-------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
 #
 def test_gradient_checking_small_neural_network_1():
     #declare structure of the neural network(no of nodes,activations of layers)
@@ -36,7 +46,6 @@ def test_gradient_checking_small_neural_network_1():
     e_nn = nn_test_1.forward_prop(x)
     derivative_analytical = nn_test_1.analytical_gradients(x,e_nn,y)
     derivative_numerical = numerical_gradients(nn_test_1,x,e_nn,y)
-    print(derivative_analytical,'\n',derivative_numerical)
     assert np.isclose(derivative_analytical,derivative_numerical).all()
 
 
@@ -49,8 +58,28 @@ def test_gradient_checking_small_neural_network_2():
     e_nn = nn_test_2.forward_prop(x1)
     derivative_analytical = nn_test_2.analytical_gradients(x1,e_nn,y1)
     derivative_numerical = numerical_gradients(nn_test_2,x1,e_nn,y1)
-    print(derivative_analytical,'\n',derivative_numerical)
     assert np.allclose(derivative_analytical,derivative_numerical,atol = 1e-5)
 
 
+def test_gradient_checking_big_neural_network_1():
+    node_list = [7,11,10,1]
+    activations = ['sigmoid','sigmoid','sigmoid']  
+    x1 = np.array([2,20,4,3,5,6,7]).reshape(1,node_list[0])
+    y1 = np.array([1000]).reshape(1,node_list[-1])
+    nn_test_2 = NeuralNetwork(node_list,activations)
+    e_nn = nn_test_2.forward_prop(x1)
+    derivative_analytical = nn_test_2.analytical_gradients(x1,e_nn,y1)
+    derivative_numerical = numerical_gradients(nn_test_2,x1,e_nn,y1)
+    assert np.allclose(derivative_analytical,derivative_numerical,atol = 1e-5)
 
+
+def test_gradient_checking_big_neural_network_2():
+    node_list = [70,15,7,1]
+    activations = ['sigmoid','sigmoid','sigmoid']  
+    x1 = np.full((1,70),5).reshape(1,node_list[0])
+    y1 = np.array([1000]).reshape(1,node_list[-1])
+    nn_test_2 = NeuralNetwork(node_list,activations)
+    e_nn = nn_test_2.forward_prop(x1)
+    derivative_analytical = nn_test_2.analytical_gradients(x1,e_nn,y1)
+    derivative_numerical = numerical_gradients(nn_test_2,x1,e_nn,y1)
+    assert np.allclose(derivative_analytical,derivative_numerical,atol = 1e-5)

@@ -1,6 +1,15 @@
+"""
+====================================================================================================
+Forwardprop unit tests
+----------------------------------------------------------------------------------------------------
+Computes the output of the NN with fixed non zero weights via forwardprop and compares it with precalculated 
+values for a tolerance.
+====================================================================================================
+
+"""
 import pytest
 import numpy as np
-from src.nnpp.neural_network2 import(
+from src.nnpp.neural_network import(
     NeuralNetwork,
     sigmoid,
     ReLU,

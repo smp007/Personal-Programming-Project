@@ -436,7 +436,7 @@ if __name__ == '__main__':
     file_list_required = sorted(os.listdir(path))
     print(len(file_list_required))
     file_list_required2 = [x[:-4] for x in file_list_required]
-    path = './symmetry_functions_demo'
+    path = './symmetry_txt'
     file_list_current = sorted(os.listdir(path))
     print(len(file_list_current))
     file_list_current2 = [x[:-4] for x in file_list_current]
@@ -446,9 +446,9 @@ if __name__ == '__main__':
     print(final_xsf_list)
     '''
 
-    path = './data_set_TiO2+outlier'
+    path = './dataset_TiO2'
     file_list = sorted(os.listdir(path))
-    f123 = open(os.path.join('./symmetry_functions_demo','error.txt'),'w+') #opens a txt file to note the files causing error.
+    f123 = open(os.path.join('./symmetry_txt','error.txt'),'w+') #opens a txt file to note the files causing error.
     print("\n-----------------------------------SYMMETRY MODULE-----------------------------------\n")
     print('###########  Writing data in the form of Symmetry vector to txt file.  ##############\n\n')
     for i,file in enumerate(file_list):
@@ -462,10 +462,10 @@ if __name__ == '__main__':
             #print(datapoints_list)
             symm_fun,_ = symmetry_function(datapoints_list)
             file_name = file[:-3]+'txt'
-            f = open(os.path.join('./symmetry_functions_demo','%s') %file_name,"w+") #opens a txt file with the same name to store the data in the form of symmetry vector
+            f = open(os.path.join('./symmetry_txt','%s') %file_name,"w+") #opens a txt file with the same name to store the data in the form of symmetry vector
             print('Reading from :',file,'\nWriting to :',file_name,'\n')
             s = np.matrix(symm_fun)
-            np.savetxt(os.path.join('./symmetry_functions_demo','%s') %file_name, s)
+            np.savetxt(os.path.join('./symmetry_txt','%s') %file_name, s)
 
     toc = time.time()
     print('\nAll datasets were read and the corresponding symmetry vectors were written to txt files.')

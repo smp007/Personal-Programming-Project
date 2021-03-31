@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 #
 
 no_of_atoms = 0
-path = './data_set_TiO2+outlier'
+path = './dataset_TiO2'
 file_list = sorted(os.listdir(path))
 
 

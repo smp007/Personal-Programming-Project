@@ -22,7 +22,7 @@ from neural_network import(
 
 l_r = 1e-3
 file_name = 'structure1694.txt' #just a random dataset
-x = np.loadtxt(os.path.join('./symmetry_functions_demo','%s') %file_name)
+x = np.loadtxt(os.path.join('./symmetry_txt','%s') %file_name)
 
 n = len(x)
 a = x.reshape(n,1,70)
@@ -61,20 +61,26 @@ Ti_weights = {
                 'w1' : nn_Ti_1a.weights1,
                 'w2' : nn_Ti_1a.weights2,
                 'w3' : nn_Ti_1a.weights3,
+                'b1' : nn_Ti_1a.bias1,
+                'b2' : nn_Ti_1a.bias2,
+                'b3' : nn_Ti_1a.bias3,        
                 }
 
 O_weights = {
                 'w1' : nn_O_1a.weights1,
                 'w2' : nn_O_1a.weights2,
                 'w3' : nn_O_1a.weights3,
+                'b1' : nn_O_1a.bias1,
+                'b2' : nn_O_1a.bias2,
+                'b3' : nn_O_1a.bias3,                 
 }
 
-np.savez('dict_ti_11_weights.npz',**Ti_weights)   #saving the weights of Ti-NN
+np.savez('params/dict_ti_11_weights.npz',**Ti_weights)   #saving the weights of Ti-NN
 npzfile1 = np.load('dict_ti_11_weights.npz')
 #print(npzfile1['w1'].shape)
 
 
-np.savez('dict_O_11_weights.npz',**O_weights)
+np.savez('params/dict_O_11_weights.npz',**O_weights)
 npzfile2 = np.load('dict_O_11_weights.npz')       #saving the weights of O-NN
 #print(npzfile2['w1'].shape)
 

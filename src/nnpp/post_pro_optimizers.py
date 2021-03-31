@@ -16,13 +16,13 @@ from reader import*
 
 if __name__ == "__main__":
     #datainput
-    path = './data_set_TiO2+outlier'
+    path = './dataset_TiO2'
     file_list,energy_list,n = data_read(path)
     energy_list2 = ([(a,b) for a,b in zip(energy_list,n)])
     a,b,c,d = test_train_split(file_list,energy_list,split=99)
     #loading the symmetry function vectors from the corresponding files from which energy value is taken
-    test_xy = ([(np.loadtxt(os.path.join('./symmetry_functions_demo','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) 
-    train_xy = ([(np.loadtxt(os.path.join('./symmetry_functions_demo','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
+    test_xy = ([(np.loadtxt(os.path.join('./symmetry_txt','%s') %(x[:-3]+'txt')),y)for x,y in zip(b,d)]) 
+    train_xy = ([(np.loadtxt(os.path.join('./symmetry_txt','%s') %(x[:-3]+'txt')),y)for x,y in zip(a,c)])
     #train set arrays-----reshaping input data in the form of (nx1x70) array and shuffling input and output with the same seed
     inputs,outputs = zip(*train_xy)
     inputs_ = np.asarray([x.reshape(len(x),1,70) for x in inputs]) #to np arrays

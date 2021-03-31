@@ -17,7 +17,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import reader
 # ==================================================================================================
 
-path = './data_set_TiO2'
+path = './dataset_TiO2'
 file_list = sorted(os.listdir(path))
 file = file_list[1000] #choosing a random file to visualize
 datapoints_list = []
