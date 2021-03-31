@@ -35,29 +35,22 @@ md_test.initial_velocities()
 print('Initial Position :\n\n',md_test.positions)
 print('Initial Position :\n\n',md_test.positions,'\n',file=f)
 
-#print(md_test.velocities)
-
-#exit(0)
+#declaring force on each atoms in Y direction and magnitude = 1 ------------------------------------
 
 force_val = [['Ti',0.0, 1.0, 0.0],['Ti',0, 1, 0],['O',0, 1, 0],['O',0,1, 0.0],['O',0, 1, 0],['O',0, 1, 0]]
 
-
-#force_val = [['Ti',0, 0, 1.0],['Ti',0, 0, 1],['O',0, 0, 1],['O',0,0, 1.0],['O',0, 0, 1],['O',0, 0, 1]]
+#---------------------------------------------------------------------------------------------------
 
 B = []
 forces = B.append([i[1:] for i in force_val])
-force_array_t = np.array(B[0])
+force_array_t = np.array(B[0])  #removing the char datatypes
 print('Force at each timestep in Y direction:\n\n',force_array_t)
 print('Force at each timestep in Y direction:\n\n',force_array_t,file=f)
-
-#print(md_test.acceleration(force_array_t))
-
-#print(md_test.positions)
 
 count = 0
 
 while count<500:
-
+    #velocitv verlet as in the md code for 500 timesteps
     acc_1 = md_test.acceleration(force_array_t)
     new_position_t,old_v_t = md_test.velocity_verlet_a(force_array_t,acc_1)
 
@@ -75,7 +68,7 @@ Atoms = np.asarray(Atoms).reshape(6,1)
 A = np.hstack((Atoms,new_position_t)).tolist()
 
 
-for i in range(len(A)):                                #nested loop to round the values except the char datatype (atomtype)
+for i in range(len(A)):                              #nested loop to round the values except the char datatype (atomtype)
     for j in range(len(A[i])):
         if j>0:
             A[i][j]= round(float(A[i][j]),3)

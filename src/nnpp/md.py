@@ -229,7 +229,7 @@ class MolecularDynamics:
     #-----------------------------------------------------------------------------------------------
 
 
-f = open('TiO2_tryx.xyz',"w+") #opening an xyz file to store positions of each timesteps
+f = open('results/TiO2_md_run.xyz',"w+") #opening an xyz file to store positions of each timesteps
 frame=0
 def xyz_writer(A,frame):
     """

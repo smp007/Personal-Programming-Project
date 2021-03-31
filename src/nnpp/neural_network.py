@@ -1068,7 +1068,7 @@ if __name__ == '__main__':
     min_max_parameters = {'min' : g_min , 'max' : g_max }
     np.savez('params/min_max_params.npz',**min_max_parameters)   #saving the min-max params to npz file
 
-    trained_params = np.asarray(load_params())   #collecting the saved weight/bias parameters
+    trained_params = np.asarray(load_params('trained'))   #collecting the saved weight/bias parameters
 
     #Declaring NN architecture
     node_list = [70,11,11,1]          

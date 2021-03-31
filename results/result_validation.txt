@@ -4,7 +4,7 @@
 
 ##################                  RESULTS                  ########################
 
-MSE of test set(eV/atom)  = 0.08809306894566592 
+MSE of test set(eV/atom)  = 0.08809306894566593 
 
 R squared value           = 0.999999703881176 
 

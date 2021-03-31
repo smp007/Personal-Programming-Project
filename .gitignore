@@ -5,3 +5,222 @@ symmetry_functions
 dataset dummy
 data_set_keras
 dataset_symm
+
+
+SGD v mini-batch.png
+SGD v mini_batch (copy 1).png
+SGD v mini_batch (copy 2).png
+SGD v mini_batch.png
+SGD v mini_batch__.png
+Ti_weights.npy
+Ti_weights.txt
+bigerrors/
+cost_variation_100__dataset.png
+cost_variation_5_dataset.png
+data_set_TiO2+outlier/
+data_set_TiO2_100/
+data_set_TiO2_500/
+data_set_TiO2_test/
+data_subsets/
+dict_O_10_weights.npz
+dict_O_11_weights.npz
+dict_O_20_weights.npz
+dict_O_8_weights.npz
+dict_O_9_weights.npz
+dict_O_weights.npz
+dict_ti_10_weights.npz
+dict_ti_11_weights.npz
+dict_ti_20_weights.npz
+dict_ti_8_weights.npz
+dict_ti_9_weights.npz
+dict_ti_weights.npz
+local minima/
+min_max_params.npz
+outlier_dataset/
+predict_v_reference_test_set.png
+predict_v_reference_test_set_.png
+saved weights new#/
+saved weights/
+src/nnpp/__pycache__/neural_network2.cpython-38.pyc
+src/nnpp/__pycache__/neuralnetworktest.cpython-38.pyc
+src/nnpp/__pycache__/reader.cpython-37.pyc
+src/nnpp/data_finder.py
+src/nnpp/energy_reader.py
+src/nnpp/md.py
+src/nnpp/symmetry_bacup_25jan.py
+sym_fun_100/
+sym_fun_500/
+sym_fun_all_2/
+sym_fun_test/
+symmetry_functions_2/
+symmetry_functions_all/
+symmetry_functions_demo/
+symmetry_functions_small/
+tests/__init__.pyc
+tests/__pycache__/test_NN_one_dataset.cpython-27-PYTEST.pyc
+tests/__pycache__/test_NN_one_dataset.cpython-38-pytest-6.1.2.pyc
+tests/__pycache__/test_activations.cpython-27-PYTEST.pyc
+tests/__pycache__/test_backprop.cpython-27-PYTEST.pyc
+tests/__pycache__/test_backprop.cpython-38-pytest-6.1.2.pyc
+tests/__pycache__/test_forwardprop.cpython-27-PYTEST.pyc
+tests/__pycache__/test_functions.cpython-38-pytest-6.1.2.pyc
+tests/__pycache__/test_one_dataset_struct_bp.cpython-27-PYTEST.pyc
+tests/__pycache__/test_one_dataset_struct_bp.cpython-38-pytest-6.1.2.pyc
+tests/__pycache__/test_very_small_dataset_training.cpython-27-PYTEST.pyc
+tests/__pycache__/test_very_small_dataset_training.cpython-38-pytest-6.1.2.pyc
+tests/not_test_NN_one_dataset.py
+tests/test_functions.py
+tests/test_one_dataset_struct_bp.py
+testset error.png
+trained_O_weights.npz
+trained_ti_weights.npz
+w_o guessed weights.png
+with guessed weights (copy 1).png
+with guessed weights.png
+ANN_v_DFT.png
+
+symmetry_txt/
+dataset_TiO2/
+md_structure_ref/
+#--------------------------------------------------------------
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+.vscode/

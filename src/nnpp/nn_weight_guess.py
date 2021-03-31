@@ -76,12 +76,12 @@ O_weights = {
 }
 
 np.savez('params/dict_ti_11_weights.npz',**Ti_weights)   #saving the weights of Ti-NN
-npzfile1 = np.load('dict_ti_11_weights.npz')
+#npzfile1 = np.load('dict_ti_11_weights.npz')
 #print(npzfile1['w1'].shape)
 
 
 np.savez('params/dict_O_11_weights.npz',**O_weights)
-npzfile2 = np.load('dict_O_11_weights.npz')       #saving the weights of O-NN
+#npzfile2 = np.load('dict_O_11_weights.npz')       #saving the weights of O-NN
 #print(npzfile2['w1'].shape)
 
 print('\n-----------  The weight parameters for starting the training has been saved    ------------\n')

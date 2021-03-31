@@ -1,3 +1,10 @@
+"""
+====================================================================================================
+Tests different functions in the symmetry module.
+----------------------------------------------------------------------------------------------------
+All the functions in the symmetry module are tested with known inputs and known outputs.
+====================================================================================================
+"""
 import pytest
 import os
 import numpy as np

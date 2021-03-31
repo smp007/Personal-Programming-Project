@@ -1,3 +1,10 @@
+"""
+====================================================================================================
+The learning capability of the NN is tested at the initial stage of training.It is trained on a small
+dataset in order to see whether it can learn well.
+====================================================================================================
+"""
+
 import pytest
 import os
 import numpy as np
